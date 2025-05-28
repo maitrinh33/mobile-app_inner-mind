@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "136965662193",
+    "firebase_url": "https://inner-mind-e9705-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "inner-mind-e9705",
+    "storage_bucket": "inner-mind-e9705.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:136965662193:android:b0d2ab93c72bc947d19050",
+        "android_client_info": {
+          "package_name": "com.miu.meditationapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "136965662193-p3qcr0m4t5o2dhdr1u40me8q40qur8g4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.miu.meditationapp",
+            "certificate_hash": "bc7239a8f4214b7d667343ab26b2299e64bb3058"
+          }
+        },
+        {
+          "client_id": "136965662193-7ni77deo49m2dvccogh6bfodm9kn85fc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBd4_yTJqWPlNGL-0lq3LxAA6ziDkDKU-w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "136965662193-7ni77deo49m2dvccogh6bfodm9kn85fc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
