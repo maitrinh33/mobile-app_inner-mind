@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class LoginForgotPassword : AppCompatActivity() {
     companion object {
+
         val TAG = "ForgotActivity"
     }
     lateinit var forgotbutton:Button
