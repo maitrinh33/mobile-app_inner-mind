@@ -83,7 +83,8 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, LoginAddUser::class.java))
         }
         binding.forgotPassword.setOnClickListener {
-            startActivity(Intent(this, LoginForgotPassword::class.java))
+            startActivity(Intent(this,
+                LoginForgotPassword::class.java))
         }
 
         binding.btnLogin.setOnClickListener {
