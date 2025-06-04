@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/custom_color_dark_background"
     tools:context=".LoginAddUser">
 
     <ScrollView
@@ -53,7 +54,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/CustomTextInputLayout"
                 android:hint="@string/lbl_firstname"
                 android:layout_marginBottom="8dp">
 
@@ -61,7 +62,8 @@
                     android:id="@+id/ptxt_firstname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPersonName"/>
+                    android:inputType="textPersonName"
+                    android:textColor="@android:color/white" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -69,7 +71,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/CustomTextInputLayout"
                 android:hint="@string/lbl_lastname"
                 android:layout_marginBottom="8dp">
 
@@ -77,14 +79,15 @@
                     android:id="@+id/ptxt_lastname"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPersonName"/>
+                    android:inputType="textPersonName"
+                    android:textColor="@android:color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/CustomTextInputLayout"
                 android:hint="@string/lbl_email"
                 android:layout_marginBottom="8dp">
 
@@ -92,14 +95,15 @@
                     android:id="@+id/ptxt_email"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPersonName"/>
+                    android:inputType="textPersonName"
+                    android:textColor="@android:color/white"/>
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/CustomTextInputLayout"
                 android:hint="@string/lbl_password"
                 android:layout_marginBottom="8dp">
 
@@ -107,14 +111,15 @@
                     android:id="@+id/ptxtpassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPassword" />
+                    android:inputType="textPassword"
+                    android:textColor="@android:color/white" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                style="@style/CustomTextInputLayout"
                 android:hint="@string/lbl_confirmpassword"
                 android:layout_marginBottom="8dp">
 
@@ -122,7 +127,8 @@
                     android:id="@+id/ptxt_cpassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textPassword" />
+                    android:inputType="textPassword"
+                    android:textColor="@android:color/white" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -130,16 +136,12 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_createuser"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="60dp"
                 android:layout_weight="1"
-                android:textAllCaps="false"
-                app:cornerRadius="24dp"
                 android:layout_gravity="center"
-                android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:backgroundTint="@color/orange_300"
                 android:text="@string/btn_add"
-                android:paddingVertical="8dp"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginBottom="16dp"
+                style="@style/OutlinedButton"/>
 
             <TextView
                 android:id="@+id/idTVLogin"
@@ -149,15 +151,15 @@
                 android:textAllCaps="false"
                 android:text="@string/idTVLogin"
                 android:gravity="center_horizontal" />
+
             <ProgressBar
                 android:id="@+id/progressbar"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:indeterminate="true"
                 android:indeterminateDrawable="@drawable/progress_bar"
-                android:visibility="gone"
-                />
+                android:visibility="gone" />
         </LinearLayout>
     </ScrollView>
 
