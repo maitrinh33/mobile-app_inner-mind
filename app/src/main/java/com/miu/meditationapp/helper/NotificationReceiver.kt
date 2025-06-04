@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.miu.meditationapp.MeditationActivity
 import com.miu.meditationapp.R
 
 class NotificationReceiver: BroadcastReceiver() {

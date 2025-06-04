@@ -20,6 +20,8 @@ import com.google.android.material.timepicker.TimeFormat
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.auth.FirebaseUser
+import com.miu.meditationapp.BreathActivity
+import com.miu.meditationapp.MeditationActivity
 import com.miu.meditationapp.R
 import com.miu.meditationapp.helper.NotificationReceiver
 import com.miu.meditationapp.databinding.FragmentHomeBinding
@@ -38,7 +40,7 @@ class HomeFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         calendar = Calendar.getInstance()
-        
+
         // Initialize Firebase Auth
         val auth = FirebaseAuth.getInstance()
         currentUser = auth.currentUser ?: run {
@@ -133,7 +135,7 @@ class HomeFragment : Fragment() {
                     this.description = description
                     enableVibration(true)
                 }
-                
+
                 val notificationManager = requireContext().getSystemService(NotificationManager::class.java)
                 notificationManager.createNotificationChannel(channel)
             } catch (e: Exception) {
@@ -151,14 +153,14 @@ class HomeFragment : Fragment() {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            
+
             alarmManager.setInexactRepeating(
                 AlarmManager.RTC_WAKEUP,
                 timeInMillis,
                 AlarmManager.INTERVAL_DAY,
                 pendingIntent
             )
-            
+
             val timeString = String.format("%02d:%02d", calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE))
             Toast.makeText(context, "Reminder set for $timeString daily", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
