@@ -60,20 +60,20 @@ class ForumFragment : Fragment() {
                     val uid = courtSnapshot.child("uid").value as String?
                     val posteddate = courtSnapshot.child("posteddate").value as String?
                     val postbody = courtSnapshot.child("postbody").value as String?
-                    
+
                     if (uid != null && posteddate != null && postbody != null) {
                         val newPost = PostHistory(uid, posteddate, postbody)
                         items.add(newPost)
                     }
                 }
-                
+
                 // Sort items by date to ensure chronological order
                 items.sortBy { it.posteddate }
-                
+
                 adapter = activity?.let { RecyclerAdapter(it.applicationContext, items) }
                 binding.recyclerV?.adapter = adapter
                 adapter?.notifyDataSetChanged()
-                
+
                 // Scroll to the latest message
                 if (items.isNotEmpty()) {
                     binding.recyclerV?.post {
@@ -94,7 +94,7 @@ class ForumFragment : Fragment() {
                 Toast.makeText(context, "Please sign in to send messages", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            
+
             if (binding.edittextChat.text.isNotEmpty()) {
                 saveUserToFirebaseDatabase()
             }
