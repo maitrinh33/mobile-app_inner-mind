@@ -9,7 +9,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.miu.meditationapp.databinding.ActivityMainBinding
+import com.miu.meditationapp.ui.main.AboutFragment
 import com.miu.meditationapp.ui.main.HomeFragment
+import com.miu.meditationapp.ui.main.ForumFragment
+import com.miu.meditationapp.ui.main.LearnFragment
 import com.miu.meditationapp.ui.main.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,13 +101,13 @@ class MainActivity : AppCompatActivity() {
         try {
             viewPagerAdapter = ViewPagerAdapter(supportFragmentManager)
             viewPagerAdapter?.let { adapter ->
-        adapter.addFragment(HomeFragment(), "Home")
-        adapter.addFragment(LearnFragment(), "Learn")
-        adapter.addFragment(ForumFragment(), "Forum")
-        adapter.addFragment(AboutFragment(), "About")
+                adapter.addFragment(HomeFragment(), "Home")
+                adapter.addFragment(LearnFragment(), "Learn")
+                adapter.addFragment(ForumFragment(), "Forum")
+                adapter.addFragment(AboutFragment(), "About")
 
-        binding.viewPager.adapter = adapter
-        binding.tabs.setupWithViewPager(binding.viewPager)
+                binding.viewPager.adapter = adapter
+                binding.tabs.setupWithViewPager(binding.viewPager)
 
                 binding.tabs.getTabAt(0)?.setIcon(R.drawable.home)
                 binding.tabs.getTabAt(1)?.setIcon(R.drawable.learn)
@@ -168,7 +171,7 @@ class MainActivity : AppCompatActivity() {
         }
         Log.d(TAG, "onTrimMemory called with level: $levelString")
         logMemoryUsage()
-        
+
         when (level) {
             TRIM_MEMORY_RUNNING_CRITICAL,
             TRIM_MEMORY_RUNNING_LOW,
@@ -194,23 +197,23 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "Cleanup already in progress, skipping")
             return
         }
-        
+
         isCleaningUp = true
         Log.d(TAG, "Starting cleanupResources")
         try {
             // Cancel any pending operations
             handler.removeCallbacksAndMessages(null)
             Log.d(TAG, "Handler callbacks removed")
-            
+
             // Cancel coroutines and wait for completion
             coroutineScope.cancel()
             Log.d(TAG, "Coroutines cancelled")
-            
+
             // Clear ViewPager and adapter
             binding.viewPager.adapter = null
             viewPagerAdapter = null
             Log.d(TAG, "ViewPager adapter cleared")
-            
+
             // Clear any Firebase listeners or operations
             try {
                 // Get the database reference and disconnect
@@ -231,7 +234,7 @@ class MainActivity : AppCompatActivity() {
 
             viewModel.cleanup()
             Log.d(TAG, "ViewModel cleanup completed")
-            
+
             // Clear any cached data
             binding.tabs.removeAllTabs()
             Log.d(TAG, "Tabs cleared")
@@ -239,7 +242,7 @@ class MainActivity : AppCompatActivity() {
             // Clear any bitmap caches or large objects
             System.gc()
             Log.d(TAG, "Garbage collection requested")
-            
+
             // Log final memory state
             logMemoryUsage()
         } catch (e: Exception) {
