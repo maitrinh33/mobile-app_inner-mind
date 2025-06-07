@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:theme="@style/ThemeOverlay.MeditationApp.FullscreenContainer"
     tools:context=".MeditationActivity"
-    android:background="@color/orange_500"
+    android:background="@color/exercise_breath"
     android:keepScreenOn="true">
 
     <LinearLayout
@@ -30,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        android:background="@color/green_505"></LinearLayout>
+        android:background="@color/green_505" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -73,15 +73,15 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/start"
-            android:layout_width="140dp"
-            android:layout_height="56dp"
+            android:layout_width="160dp"
+            android:layout_height="60dp"
             android:layout_weight="1"
             android:textAllCaps="false"
-            app:cornerRadius="20dp"
+            app:cornerRadius="30dp"
             android:layout_gravity="center"
             android:layout_margin="8dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:backgroundTint="@color/green_700"
+            android:backgroundTint="@color/black_button"
             android:text="@string/str_start" />
     </LinearLayout>
 </FrameLayout>

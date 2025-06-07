@@ -77,7 +77,7 @@
                 app:cornerRadius="24dp"
                 android:layout_margin="8dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:backgroundTint="@color/green_500"
+                android:backgroundTint="@color/green_700"
                 android:text="Logout" />
         </LinearLayout>
     </ScrollView>

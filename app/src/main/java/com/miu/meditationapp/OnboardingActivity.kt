@@ -35,7 +35,7 @@ class OnboardingActivity : AppCompatActivity() {
         onboardingItemsAdapter = OnboardingItemsAdapter(
             listOf(
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_hello,
+                    onboardingImage = R.drawable.img_welcome,
                     title = "Welcome to 7PM",
                     description = "We'll show you how to train your mind for happier, healthier life."
                 ),

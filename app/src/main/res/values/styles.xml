@@ -1,11 +1,11 @@
 <resources>
 
     <style name="Widget.Theme.MeditationApp.ActionBar.Fullscreen" parent="Widget.AppCompat.ActionBar">
-        <item name="android:background">@color/black_overlay</item>
+        <item name="android:background">@color/black</item>
     </style>
 
     <style name="Widget.Theme.MeditationApp.ButtonBar.Fullscreen" parent="">
-        <item name="android:background">@color/black_overlay</item>
+        <item name="android:background">@color/black</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
 
@@ -15,7 +15,7 @@
         <item name="android:paddingVertical">8dp</item>
         <item name="cornerRadius">24dp</item>
         <item name="strokeColor">@android:color/white</item>
-        <item name="backgroundTint">#80FFFFFF</item>
+        <item name="backgroundTint">#30FFFFFF</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Medium</item>
     </style>
 

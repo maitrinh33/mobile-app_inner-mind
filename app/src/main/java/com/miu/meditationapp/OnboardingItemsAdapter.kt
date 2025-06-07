@@ -13,7 +13,7 @@ RecyclerView.Adapter<OnboardingItemsAdapter.OnboardingItemViewHolder> ()  {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OnboardingItemViewHolder {
         return OnboardingItemViewHolder(
             LayoutInflater.from(parent.context).inflate(
-                R.layout.onbaording_item_container,
+                R.layout.onboarding_item_container,
                 parent,
                 false
             )

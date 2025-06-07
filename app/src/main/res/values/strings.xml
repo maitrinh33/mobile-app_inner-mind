@@ -25,7 +25,7 @@
     <string name="btn_forgotPassword">Request Password Change</string>
     <string name="forgotPassword_desc">\n\n\nEnter the email associated with your 7PM account.* \n\nAn email will be sent to you with instructions for resetting your password.*</string>
     <string name="breathing_desc">Breathing is the greatest pleasure in life.</string>
-    <string name="meditation_desc">The act of meditation is being spacious.</string>
+    <string name="meditation_desc">Get your own mindful space with music.</string>
     <string name="str_times_meditate">times meditated</string>
     <string name="firebaseid">883691378743-j3rn3non4pmn833b12pavl5glj853sp6.apps.googleusercontent.com</string>
     <string name="str_min_meditate">minutes meditated</string>
