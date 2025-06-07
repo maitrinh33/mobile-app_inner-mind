@@ -16,6 +16,7 @@
         <item name="cornerRadius">24dp</item>
         <item name="strokeColor">@android:color/white</item>
         <item name="backgroundTint">#30FFFFFF</item>
+        <item name="backgroundTint">#80FFFFFF</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Medium</item>
     </style>
 
