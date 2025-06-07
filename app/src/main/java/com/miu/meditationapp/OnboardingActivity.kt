@@ -35,32 +35,32 @@ class OnboardingActivity : AppCompatActivity() {
         onboardingItemsAdapter = OnboardingItemsAdapter(
             listOf(
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_welcome,
+                    onboardingImage = R.drawable.onboarding_welcome,
                     title = "Welcome to 7PM",
                     description = "We'll show you how to train your mind for happier, healthier life."
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_medi,
+                    onboardingImage = R.drawable.onboarding_meditation,
                     title = "Meditation made simple!",
                     description = "It's okay if you've never meditated before"
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_book,
+                    onboardingImage = R.drawable.onboarding_breath,
                     title = "Breathe exercise",
                     description = "Learn how to build your resilience using your own breathe"
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_communi,
+                    onboardingImage = R.drawable.onboarding_community,
                     title = "Community",
                     description = "You can reach out to anyone at anytime."
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.img_paint,
-                    title = "Courses for absolute beginners ",
+                    onboardingImage = R.drawable.onboarding_tutorial,
+                    title = "A very concise video for absolute beginners ",
                     description = "In fact, we made a quick video to help you learn the basics"
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.ready,
+                    onboardingImage = R.drawable.onboarding_welcome,
                     title = "Ready!",
                     description = "Now, get ready to sit back and enjoy 7PM application"
                 )

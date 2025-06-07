@@ -108,19 +108,19 @@ class RecyclerAdapter(var context: Context, items: List<PostHistory>) :
                         if (imageUrl.isNotEmpty()) {
                             Picasso.get()
                                 .load(imageUrl)
-                                .error(R.drawable.img_communi)
+                                .error(R.drawable.onboarding_community)
                                 .into(holder.image)
                         } else {
-                            holder.image.setImageResource(R.drawable.img_communi)
+                            holder.image.setImageResource(R.drawable.onboarding_community)
                         }
                     } else {
-                        holder.image.setImageResource(R.drawable.img_communi)
+                        holder.image.setImageResource(R.drawable.onboarding_community)
                     }
                 }.addOnFailureListener {
-                    holder.image.setImageResource(R.drawable.img_communi)
+                    holder.image.setImageResource(R.drawable.onboarding_community)
                 }
             } else {
-                holder.image.setImageResource(R.drawable.img_communi)
+                holder.image.setImageResource(R.drawable.onboarding_community)
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error in onBindViewHolder: ${e.message}")
