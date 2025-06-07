@@ -46,7 +46,7 @@ class AboutFragment : Fragment() {
 
         // Set default values
         binding.name.text = "Hi there!"
-        binding.avatar.setImageResource(R.drawable.img_communi)
+        binding.avatar.setImageResource(R.drawable.onboarding_community)
 
         // Load user data
         viewModel.getFirstName()
@@ -62,11 +62,11 @@ class AboutFragment : Fragment() {
                 try {
                     Picasso.get()
                         .load(profileUrl)
-                        .error(R.drawable.img_communi)
+                        .error(R.drawable.onboarding_community)
                         .into(binding.avatar)
                 } catch (e: Exception) {
                     Log.e("AboutFragment", "Error loading profile picture: ${e.message}")
-                    binding.avatar.setImageResource(R.drawable.img_communi)
+                    binding.avatar.setImageResource(R.drawable.onboarding_community)
                 }
             }
         }
