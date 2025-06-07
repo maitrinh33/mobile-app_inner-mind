@@ -49,15 +49,15 @@
                     android:layout_height="wrap_content"
                     android:text="-"
                     android:textStyle="bold"
-                    android:textColor="@color/green_500"
+                    android:textColor="@color/color_text"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/str_min_meditate"
-                    android:textColor="@color/green_500"
-                    android:textAppearance="?attr/textAppearanceBody2" />
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:textColor="@color/color_text" />
             </LinearLayout>
 
             <ImageView
@@ -88,7 +88,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="-"
-                    android:textColor="@color/light_blue_600"
+                    android:textColor="@color/color_text"
                     android:textStyle="bold"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
@@ -96,7 +96,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/str_times_meditate"
-                    android:textColor="@color/light_blue_600"
+                    android:textColor="@color/color_text"
                     android:textAppearance="?attr/textAppearanceBody2" />
             </LinearLayout>
 
@@ -138,15 +138,15 @@
                     android:layout_height="wrap_content"
                     android:text="-"
                     android:textStyle="bold"
-                    android:textColor="@color/orange_500"
+                    android:textColor="@color/color_text"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="122dp"
                     android:layout_height="wrap_content"
                     android:text="@string/str_min_breathe"
-                    android:textColor="@color/orange_500"
-                    android:textAppearance="?attr/textAppearanceBody2" />
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:textColor="@color/color_text" />
             </LinearLayout>
 
             <ImageView
@@ -178,15 +178,15 @@
                     android:text="-"
                     android:id="@+id/val_breathe_times"
                     android:textStyle="bold"
-                    android:textColor="@color/orange_300"
+                    android:textColor="@color/color_text"
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="122dp"
                     android:layout_height="wrap_content"
                     android:text="@string/str_times_breathe"
-                    android:textColor="@color/orange_300"
-                    android:textAppearance="?attr/textAppearanceBody2" />
+                    android:textAppearance="?attr/textAppearanceBody2"
+                    android:textColor="@color/color_text" />
             </LinearLayout>
 
             <ImageView

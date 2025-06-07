@@ -131,7 +131,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
     private fun startMainActivity() {
-        if (isSeenOnbaord()) {
+        if (isSeenOnboard()) {
             startActivity(Intent(this, MainActivity::class.java))
         } else {
             startActivity(Intent(this, OnboardingActivity::class.java))
@@ -147,7 +147,7 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    fun isSeenOnbaord(): Boolean {
+    fun isSeenOnboard(): Boolean {
         return preferences.getBoolean("ISCOMPLETE", false)
     }
 }

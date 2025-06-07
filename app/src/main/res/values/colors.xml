@@ -10,15 +10,19 @@
 
     <color name="beige_100">#FFf7d8cc</color>
 
-    <color name="orange_500">#FFFF9F9E</color>
-    <color name="orange_300">#FFFDBE6A</color>
+    <color name="orange_500">#F0C2C1</color>
+    <color name="orange_300">#E0AD90</color>
     <!--    green-->
     <color name="green_200">#FFC7E1DE</color>
+    <color name="green_400">#A4EB6B</color>
     <color name="green_500">#FF8AA771</color>
     <color name="green_505">#558AA771</color>
     <color name="green_700">#FF60794a</color>
     <color name="green_705">#99496E81</color>
     <color name="green_800">#FF404F49</color>
+    <color name="green">#0D6B2F</color>
+
+
     <!--    yellow-->
     <color name="yellow_200">#FFFFFADD</color>
     <color name="yellow_500">#FFFFEF95</color>
@@ -30,8 +34,13 @@
     <color name="light_blue_900">#FF01579B</color>
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
-    <color name="black_overlay">#66000000</color>
+    <color name="black_button">#2A3D38</color>
+
     <!--Custom Colors-->
+    <color name="color_primary">#59801D</color>
+    <color name="color_text">#4B1717</color>
+    <color name="exercise_breath">#FFFF9F9E</color>
+
     <color name="custom_color_dark_background">#123F38</color>
     <color name="custom_color_primary">#643AE7</color>
     <color name="custom_color_secondary">#FF8F00</color>

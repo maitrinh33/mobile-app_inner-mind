@@ -6,23 +6,24 @@ android:id="@+id/container"
 android:layout_width="match_parent"
 android:layout_height="match_parent"
 tools:context=".MainActivity"
-android:background="@color/additional_color">
+android:background="@drawable/onboarding_bg">
 
 
-<androidx.viewpager2.widget.ViewPager2
-    android:id="@+id/onboardingViewPager"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:background="@drawable/view_pager_background"
-    app:layout_constraintBottom_toTopOf="@+id/viewCenterOfNext"
-    app:layout_constraintTop_toTopOf="parent" />
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/onboardingViewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/view_pager_background"
+        app:layout_constraintBottom_toTopOf="@+id/viewCenterOfNext"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="0dp" />
 
     <LinearLayout
         android:id="@+id/indicatorsContainer"
         android:layout_width="wrap_content"
         android:layout_height="60dp"
         android:layout_marginStart="16dp"
-        android:layout_marginLeft="16dp"
         android:orientation="horizontal"
         android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -48,8 +49,8 @@ android:background="@color/additional_color">
 
     <ImageView
         android:id="@+id/imageNext"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
         android:layout_marginBottom="50dp"
         android:contentDescription="@string/app_name"
         android:background="@drawable/icon_background"
@@ -61,7 +62,8 @@ android:background="@color/additional_color">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/buttonGetStarted"
-        android:layout_width="wrap_content"
+        style="@style/OutlinedButton"
+        android:layout_width="190dp"
         android:layout_height="60dp"
         android:layout_marginBottom="50dp"
         android:paddingStart="40dp"
@@ -69,11 +71,10 @@ android:background="@color/additional_color">
         android:text="Get Started"
         android:textAllCaps="false"
         android:textSize="16sp"
-        android:backgroundTint="@color/custom_color_secondary"
         app:cornerRadius="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"></com.google.android.material.button.MaterialButton>
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/textSkip"
@@ -85,7 +86,6 @@ android:background="@color/additional_color">
         android:textColor="@color/white"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginRight="20dp"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
