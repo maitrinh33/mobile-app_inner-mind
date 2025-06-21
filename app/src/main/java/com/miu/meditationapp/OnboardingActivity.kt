@@ -41,7 +41,7 @@ class OnboardingActivity : AppCompatActivity() {
                 ),
                 OnboardingItem(
                     onboardingImage = R.drawable.onboarding_meditation,
-                    title = "Meditation made simple!",
+                    title = "Simple meditation!",
                     description = "It's okay if you've never meditated before"
                 ),
                 OnboardingItem(
@@ -56,11 +56,11 @@ class OnboardingActivity : AppCompatActivity() {
                 ),
                 OnboardingItem(
                     onboardingImage = R.drawable.onboarding_tutorial,
-                    title = "A very concise video for absolute beginners ",
-                    description = "In fact, we made a quick video to help you learn the basics"
+                    title = "Tutorials available!",
+                    description = "We made a quick video to help you learn the basics"
                 ),
                 OnboardingItem(
-                    onboardingImage = R.drawable.onboarding_welcome,
+                    onboardingImage = R.drawable.onboarding_ready,
                     title = "Ready!",
                     description = "Now, get ready to sit back and enjoy 7PM application"
                 )
