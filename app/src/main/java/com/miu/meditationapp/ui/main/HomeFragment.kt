@@ -91,7 +91,15 @@ class HomeFragment : Fragment() {
             startActivity(Intent(context, MeditationActivity::class.java))
         }
 
+        binding.meditateExercise.setOnClickListener {
+            startActivity(Intent(context, MeditationActivity::class.java))
+        }
+
         binding.breathe.setOnClickListener {
+            startActivity(Intent(context, BreathActivity::class.java))
+        }
+
+        binding.breathExercise.setOnClickListener {
             startActivity(Intent(context, BreathActivity::class.java))
         }
 
