@@ -10,7 +10,6 @@ import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
@@ -18,15 +17,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.miu.meditationapp.databinding.ActivityLoginBinding
-
+import com.miu.meditationapp.models.User
 
 class LoginActivity : AppCompatActivity() {
     companion object {
-        val TAG = "login"
+        private const val TAG = "login"
         private const val RC_SIGN_IN = 9001
     }
+
     private lateinit var binding: ActivityLoginBinding
-    lateinit var mAuth: FirebaseAuth
+    private lateinit var mAuth: FirebaseAuth
     private lateinit var mGoogleSignInClient: GoogleSignInClient
     private lateinit var preferences: SharedPreferences
 
@@ -36,50 +36,73 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         mAuth = FirebaseAuth.getInstance()
+        preferences = getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)
 
         // Configure Google Sign In
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_id))
             .requestEmail()
             .build()
-
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso)
 
         binding.signInButton.setOnClickListener {
-            Log.d(TAG, "Google Sign-In button clicked")
             signIn()
         }
-
-        preferences = getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)
 
         binding.registerTV.setOnClickListener {
             startActivity(Intent(this, LoginAddUser::class.java))
         }
+
         binding.forgotPassword.setOnClickListener {
             startActivity(Intent(this, LoginForgotPassword::class.java))
         }
 
+        // Email & Password Login
         binding.btnLogin.setOnClickListener {
-            val email: String = binding.inputEmail.text.toString()
-            val pwd: String = binding.inputPassword.text.toString()
+            val email = binding.inputEmail.text.toString().trim()
+            val pwd = binding.inputPassword.text.toString().trim()
+
             if (TextUtils.isEmpty(email) || TextUtils.isEmpty(pwd)) {
                 Toast.makeText(this, "Please enter your credentials", Toast.LENGTH_SHORT).show()
-            } else {
-                mAuth.signInWithEmailAndPassword(email, pwd).addOnCompleteListener(this) { task ->
-                    if (task.isSuccessful) {
-                        binding.progressbar.visibility = View.GONE
-                        Toast.makeText(this, "Login Successful..", Toast.LENGTH_SHORT).show()
-                        startMainActivity()
-                    } else { binding.progressbar.visibility = View.GONE
-                        Toast.makeText(this, "Email or Password is wrong. Please try again.", Toast.LENGTH_SHORT).show()
-                    }
+                return@setOnClickListener
+            }
+
+            binding.progressbar.visibility = View.VISIBLE
+            mAuth.signInWithEmailAndPassword(email, pwd).addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    checkUserRoleAndProceed()
+                } else {
+                    binding.progressbar.visibility = View.GONE
+                    Toast.makeText(this, "Email or Password is wrong. Please try again.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
+    private fun checkUserRoleAndProceed() {
+        val user = mAuth.currentUser
+        if (user == null) {
+            binding.progressbar.visibility = View.GONE
+            return
+        }
+
+        val database = com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
+        database.child(user.uid).get().addOnSuccessListener { snapshot ->
+            binding.progressbar.visibility = View.GONE
+            if (snapshot.exists() && snapshot.child("isAdmin").value == true) {
+                Toast.makeText(this, "Welcome Admin!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Login Successful..", Toast.LENGTH_SHORT).show()
+            }
+            startMainActivity()
+        }.addOnFailureListener {
+            binding.progressbar.visibility = View.GONE
+            Toast.makeText(this, "Login successful, but failed to fetch user data.", Toast.LENGTH_SHORT).show()
+            startMainActivity() // Proceed anyway
+        }
+    }
+
     private fun signIn() {
-        Log.d(TAG, "Starting Google Sign-In process")
         val signInIntent = mGoogleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
@@ -87,38 +110,60 @@ class LoginActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
-                // Google Sign In was successful, authenticate with Firebase
                 val account = task.getResult(ApiException::class.java)!!
-                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                // Google Sign In failed, update UI appropriately
                 Log.w(TAG, "Google sign in failed", e)
-                Log.w(TAG, "Google sign in failed, status code: ${e.statusCode}")
-                Toast.makeText(this, "Google Sign-In failed. Error code: ${e.statusCode}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Google Sign-In failed.", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
+        binding.progressbar.visibility = View.VISIBLE
         mAuth.signInWithCredential(credential)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithCredential:success")
                     val user = mAuth.currentUser
-                    Toast.makeText(this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show()
-                    startMainActivity()
+                    val isNewUser = task.result?.additionalUserInfo?.isNewUser ?: false
+
+                    if (isNewUser && user != null) {
+                        saveGoogleUserToDb(user) // Save new user to DB
+                    } else {
+                        binding.progressbar.visibility = View.GONE
+                        Toast.makeText(this, "Google Sign-In Successful!", Toast.LENGTH_SHORT).show()
+                        startMainActivity()
+                    }
                 } else {
-                    // If sign in fails, display a message to the user.
+                    binding.progressbar.visibility = View.GONE
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    Toast.makeText(this, "Authentication failed: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Google Authentication failed.", Toast.LENGTH_SHORT).show()
                 }
+            }
+    }
+
+    private fun saveGoogleUserToDb(firebaseUser: FirebaseUser) {
+        val ref = com.google.firebase.database.FirebaseDatabase.getInstance().getReference("/users/${firebaseUser.uid}")
+        val username = firebaseUser.displayName ?: firebaseUser.email?.split('@')?.get(0) ?: "User"
+        val profileImageUrl = firebaseUser.photoUrl?.toString() ?: ""
+        
+        val userToSave = User(firebaseUser.uid, username, profileImageUrl, false)
+
+        ref.setValue(userToSave)
+            .addOnSuccessListener {
+                binding.progressbar.visibility = View.GONE
+                Log.d(TAG, "Successfully saved new Google user to Firebase DB")
+                Toast.makeText(this, "Welcome!", Toast.LENGTH_SHORT).show()
+                startMainActivity()
+            }
+            .addOnFailureListener {
+                binding.progressbar.visibility = View.GONE
+                Log.e(TAG, "Failed to save new Google user to DB", it)
+                startMainActivity() // Proceed even if saving fails
             }
     }
 
@@ -133,13 +178,12 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        var user: FirebaseUser? = mAuth.currentUser
-        if (user != null) {
+        if (mAuth.currentUser != null) {
             startMainActivity()
         }
     }
 
-    fun isSeenOnboard(): Boolean {
+    private fun isSeenOnboard(): Boolean {
         return preferences.getBoolean("ISCOMPLETE", false)
     }
 }

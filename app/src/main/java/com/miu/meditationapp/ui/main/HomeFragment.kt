@@ -74,8 +74,8 @@ class HomeFragment : Fragment() {
         database.child(currentUser.uid).get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    val firstName = snapshot.child("firstname").value.toString()
-                    binding.textView3.text = firstName
+                    val username = snapshot.child("username").value.toString()
+                    binding.textView3.text = username
                 } else {
                     binding.textView3.text = "User"
                 }
