@@ -1,40 +1,26 @@
-# InnerMind
 
+# InnerMind
 
 ## 🧩 Project Objective
 
 InnerMind is a mobile application designed to help users improve their mental well-being through meditation, breathing exercises, music, and a supportive community. The app aims to make mindfulness and relaxation accessible to everyone, regardless of their experience level.
 
-
+---
 
 ## 🛠️ Technologies Used
 
-- **Programming Language:** Kotlin
+|Category|Tools & Libraries|
+|---|---|
+|Programming Language|Kotlin|
+|Framework|Android SDK (minSdk 19, targetSdk 34)|
+|Architecture|MVVM (Model-View-ViewModel)|
+|Database|Room (SQLite)|
+|Cloud Services|Firebase (Authentication, Realtime Database, Storage, Analytics)|
+|Media|ExoPlayer / MediaPlayer, Lottie|
+|UI Components|Material Components, ViewBinding, ConstraintLayout, RecyclerView|
+|Other Libraries|Groupie, Picasso, Dropbox SDK, Conscrypt, CircleImageView|
 
-- **Framework:** Android SDK (minSdk 19, targetSdk 34)
-
-- **Architecture:** MVVM (Model-View-ViewModel)
-
-- **Database:** Room (SQLite)
-
-- **Cloud Services:** Firebase (Authentication, Realtime Database, Storage, Analytics)
-
-- **Media:** ExoPlayer/MediaPlayer, Lottie for animations
-
-- **UI:** Material Components, ViewBinding, ConstraintLayout, RecyclerView
-
-- **Other Libraries:**
-
-- Groupie (RecyclerView management)
-
-- Picasso (image loading)
-
-- Dropbox SDK (avatar upload)
-
-- Conscrypt (security)
-
-- CircleImageView
-
+---
 
 ## 🧪 Main Features
 
@@ -59,58 +45,64 @@ InnerMind is a mobile application designed to help users improve their mental we
 - **Video Tutorials:** Watch instructional videos to learn meditation and breathing techniques.
 
 
+---
 
 ## 🧭 How to Run the Project
 
-1. **Requirements:**
+### 1. Requirements
 
 - Android Studio (latest recommended)
 
 - Android SDK 34+
 
-- Google Services JSON (for Firebase, place in `app/` as `google-services.json`)
+- Google Services JSON (`google-services.json`) – place in the `app/` folder
 
-2. **Clone the repository:**
 
-```bash  
-  
-git clone <repo-url>  
-  
-```  
+### 2. Clone the Repository
 
-3. **Open in Android Studio:**
+```bash
+git clone <repo-url>
+```
 
-- File > Open > Select the project directory
+### 3. Open in Android Studio
 
-4. **Sync Gradle:**
+- Go to **File > Open** and select the project directory
 
-- Let Android Studio download dependencies
 
-5. **Run the app:**
+### 4. Sync Gradle
+
+- Allow Android Studio to download all dependencies
+
+
+### 5. Run the App
 
 - Connect an Android device or use an emulator
 
-- Click 'Run' or use `Shift+F10`
+- Press **Run** or use shortcut `Shift + F10`
 
 
+---
 
 ## 👨‍💻 Project Team
 
-Team 7PM:
+**Team 7PM:**
 
-	- Đỗ Phạm Mai Trinh
+- Đỗ Phạm Mai Trinh
 
-	- Trương Tuyết Trinh
+- Trương Tuyết Trinh
 
-	- Trần Bảo Nhi
+- Trần Bảo Nhi
 
-	- Phan Thị Thùy Nhung
+- Phan Thị Thùy Nhung
 
-	- Trương Huy Hoàng
+- Trương Huy Hoàng
 
-	- Đinh Gia Ngân
+- Đinh Gia Ngân
 
-	- Nguyễn Hoàng Thanh Trâm
+- Nguyễn Hoàng Thanh Trâm
+
+
+---
 
 ## 🔖 Notes
 
@@ -118,5 +110,5 @@ Team 7PM:
 
 - Some features (e.g., Dropbox avatar upload) require valid API keys and setup.
 
-- For best experience, use on Android 8.0 (API 26) or higher.# InnerMind  
-  
+- For best experience, use on Android 8.0 (API 26) or higher.
+    
