@@ -1,11 +1,9 @@
-package com.miu.meditationapp.activities
-
+   package com.miu.meditationapp.activities
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
@@ -13,10 +11,13 @@ import android.widget.*
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
 import com.miu.meditationapp.databinding.ActivityLoginAddUserBinding
-import com.miu.meditationapp.models.User
 import java.util.*
+import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.BitmapFactory
+import com.miu.meditationapp.helper.DropboxHelper
+import com.miu.meditationapp.activities.LoginActivity
+import com.miu.meditationapp.activities.MainActivity
 
 class LoginAddUser : AppCompatActivity() {
     companion object {
@@ -33,6 +34,17 @@ class LoginAddUser : AppCompatActivity() {
     lateinit var createuserBtn: Button
     lateinit var loadingPB: ProgressBar
     lateinit var mAuth: FirebaseAuth
+    private var selectedPhotoUri: Uri? = null
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            selectedPhotoUri = uri
+            Log.d("RegisterActivity", "Selected photo uri: $selectedPhotoUri")
+            val inputStream = contentResolver.openInputStream(selectedPhotoUri!!)
+            val bitmap = BitmapFactory.decodeStream(inputStream)
+            binding.selectphotoImageviewRegister.setImageBitmap(bitmap)
+            binding.selectphotoButtonRegister.visibility = View.GONE
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +78,36 @@ class LoginAddUser : AppCompatActivity() {
                 loadingPB.visibility = View.VISIBLE
                 mAuth.createUserWithEmailAndPassword(email,pwd).addOnCompleteListener(this) { task ->
                     if(task.isSuccessful) {
-                        saveUserToFirebaseDatabase("")
+                        if (selectedPhotoUri != null) {
+                            val inputStream = contentResolver.openInputStream(selectedPhotoUri!!)
+                            if (inputStream == null) {
+                                Log.e("RegisterActivity", "inputStream is null!")
+                                runOnUiThread {
+                                    loadingPB.visibility = View.GONE
+                                    Toast.makeText(this, "Ảnh không hợp lệ hoặc không đọc được!", Toast.LENGTH_SHORT).show()
+                                }
+                                return@addOnCompleteListener
+                            }
+                            val fileName = "avatar_${UUID.randomUUID()}.jpg"
+                            DropboxHelper.uploadFile(
+                                inputStream,
+                                "/avatars/$fileName",
+                                onSuccess = {
+                                    val profileImageUrl = DropboxHelper.getSharedLink("/avatars/$fileName")
+                                    saveUserToFirebaseDatabase(profileImageUrl, fname, lname)
+                                },
+                                onError = { e ->
+                                    runOnUiThread {
+                                        loadingPB.visibility = View.GONE
+                                        Log.e("RegisterActivity", "Dropbox upload error", e)
+                                        Toast.makeText(this, "Failed to upload avatar: ${e.message ?: e.toString()}", Toast.LENGTH_SHORT).show()
+                                        saveUserToFirebaseDatabase("", fname, lname)
+                                    }
+                                }
+                            )
+                        } else {
+                            saveUserToFirebaseDatabase("", fname, lname)
+                        }
                     } else {
                         loadingPB.visibility = View.GONE
                         Toast.makeText(this, "Your internet connection is not stable. Try again...", Toast.LENGTH_SHORT).show()
@@ -74,14 +115,25 @@ class LoginAddUser : AppCompatActivity() {
                 }
             }
         }
+        binding.selectphotoButtonRegister.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
+        binding.selectphotoImageviewRegister.setOnClickListener {
+            pickImageLauncher.launch("image/*")
+        }
     }
 
-    private fun saveUserToFirebaseDatabase(profileImageUrl: String) {
+    private fun saveUserToFirebaseDatabase(profileImageUrl: String, firstname: String, lastname: String) {
         val uid = FirebaseAuth.getInstance().uid ?: ""
         val ref = FirebaseDatabase.getInstance().getReference("/users/$uid")
-
-        val user = User(uid, binding.ptxtFirstname.text.toString(), profileImageUrl, false)
-
+        val user = mapOf(
+            "uid" to uid,
+            "username" to firstname,
+            "firstname" to firstname,
+            "lastname" to lastname,
+            "profileImageUrl" to profileImageUrl,
+            "isAdmin" to false
+        )
         ref.setValue(user)
             .addOnSuccessListener {
                 Log.d(TAG, "Finally we saved the user to Firebase Database")
@@ -97,5 +149,4 @@ class LoginAddUser : AppCompatActivity() {
                 Toast.makeText(this, "Failed to save user details.", Toast.LENGTH_SHORT).show()
             }
     }
-
-} 
+}

@@ -19,6 +19,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.miu.meditationapp.R
 import com.miu.meditationapp.databinding.ActivityLoginBinding
 import com.miu.meditationapp.models.User
+import com.miu.meditationapp.activities.LoginAddUser
 
 class LoginActivity : AppCompatActivity() {
     companion object {
