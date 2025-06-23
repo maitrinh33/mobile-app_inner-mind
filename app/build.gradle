@@ -114,6 +114,9 @@ dependencies {
     // Add Conscrypt for OkHttp
     implementation 'org.conscrypt:conscrypt-android:2.5.2'
 
+    // Dropbox
+    implementation 'com.dropbox.core:dropbox-core-sdk:5.4.6'
+
     // Testing
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

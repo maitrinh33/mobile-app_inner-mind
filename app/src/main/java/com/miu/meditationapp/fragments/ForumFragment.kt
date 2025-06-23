@@ -85,7 +85,9 @@ class ForumFragment : Fragment() {
 
             override fun onCancelled(error: DatabaseError) {
                 Log.e("ForumFragment", "Database error: ${error.message}")
-                Toast.makeText(context, "Error loading messages: ${error.message}", Toast.LENGTH_SHORT).show()
+                context?.let {
+                    Toast.makeText(it, "Error loading messages: ${error.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
         ref.addValueEventListener(postListener)
