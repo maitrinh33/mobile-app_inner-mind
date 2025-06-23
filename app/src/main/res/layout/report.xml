@@ -182,7 +182,7 @@
                     android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <TextView
-                    android:layout_width="140dp"
+                    android:layout_width="160dp"
                     android:layout_height="wrap_content"
                     android:text="@string/str_times_breathe"
                     android:textAppearance="?attr/textAppearanceBody2"

@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.miu.meditationapp.MeditationActivity
+import com.miu.meditationapp.activities.MeditationActivity
 import com.miu.meditationapp.R
 
 class NotificationReceiver: BroadcastReceiver() {
@@ -18,7 +18,7 @@ class NotificationReceiver: BroadcastReceiver() {
 
         var builder: NotificationCompat.Builder = NotificationCompat.Builder(context, "MORNING")
             .setContentIntent(pendingIntent)
-            .setSmallIcon(R.drawable.about)
+            .setSmallIcon(R.drawable.nav_about)
             .setContentTitle("Ding!!! ")
             .setContentText("It is time to Meditate! Click here to start meditating.")
             .setPriority(NotificationCompat.PRIORITY_HIGH)

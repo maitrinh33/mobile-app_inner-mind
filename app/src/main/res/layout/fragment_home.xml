@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.main.HomeFragment">
+    android:background="@drawable/home_background"
+    tools:context=".fragments.HomeFragment">
 
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/breatheView"
@@ -138,7 +139,7 @@
                 android:focusable="true"
                 android:checkable="true"
                 app:cardCornerRadius="16dp"
-                android:backgroundTint="@color/orange_500"
+                android:backgroundTint="@color/green_500"
                 android:outlineAmbientShadowColor="@color/green_700"
                 android:layout_marginBottom="16dp">
 

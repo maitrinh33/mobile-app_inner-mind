@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ui.main.AboutFragment">
+    tools:context=".fragments.AboutFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
                 android:layout_height="190dp"
                 android:layout_gravity="center"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/orange_300"
+                app:cardBackgroundColor="@color/green_500"
                 app:cardCornerRadius="260dp">
 
                 <androidx.cardview.widget.CardView
