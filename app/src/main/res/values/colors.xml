@@ -10,8 +10,6 @@
 
     <color name="beige_100">#FFf7d8cc</color>
 
-    <color name="orange_500">#F0C2C1</color>
-    <color name="orange_300">#E0AD90</color>
     <!--    green-->
     <color name="green_200">#FFC7E1DE</color>
     <color name="green_400">#A4EB6B</color>
@@ -35,6 +33,10 @@
     <color name="light_blue_A200">#FF40C4FF</color>
     <color name="light_blue_A400">#FF00B0FF</color>
     <color name="black_button">#2A3D38</color>
+
+    <!--Orange Colors-->
+    <color name="orange_300">#C381D742</color>
+    <color name="orange_500">#B9E786</color>
 
     <!--Custom Colors-->
     <color name="color_primary">#59801D</color>

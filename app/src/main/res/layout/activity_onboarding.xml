@@ -12,7 +12,7 @@ android:background="@drawable/onboarding_bg">
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/onboardingViewPager"
         android:layout_width="match_parent"
-        android:layout_height="540dp"
+        android:layout_height="500dp"
         android:background="@drawable/view_pager_background"
         app:layout_constraintBottom_toTopOf="@+id/viewCenterOfNext"
         app:layout_constraintTop_toTopOf="parent"
@@ -51,7 +51,7 @@ android:background="@drawable/onboarding_bg">
         android:id="@+id/imageNext"
         android:layout_width="55dp"
         android:layout_height="55dp"
-        android:layout_marginBottom="50dp"
+        android:layout_marginBottom="90dp"
         android:contentDescription="@string/app_name"
         android:background="@drawable/icon_background"
         android:src="@drawable/ic_right"
