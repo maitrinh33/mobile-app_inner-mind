@@ -20,6 +20,7 @@ class MusicNotificationManager(private val context: Context) {
     
     private var notificationManager: NotificationManager? = null
     private var mediaSession: MediaSessionCompat? = null
+    private var currentNotification: Notification? = null
     
     companion object {
         const val NOTIFICATION_ID = 1
@@ -60,53 +61,63 @@ class MusicNotificationManager(private val context: Context) {
     fun createNotification(
         title: String,
         isPlaying: Boolean,
-        onPlayPause: () -> Unit,
-        onStop: () -> Unit
+        onPlayPauseClick: () -> Unit,
+        onStopClick: () -> Unit
     ): Notification {
+        val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
         
-        // Create intent for opening the app
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            context, 0, intent,
+        // Create pending intents for actions
+        val playPauseIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent("com.miu.meditationapp.PLAY_PAUSE"),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        // Create play/pause action
-        val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
-        val playPauseAction = NotificationCompat.Action(
-            playPauseIcon,
-            if (isPlaying) "Pause" else "Play",
-            PendingIntent.getBroadcast(
-                context, 1,
-                Intent("com.miu.meditationapp.ACTION_PLAY_PAUSE"),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+        val stopIntent = PendingIntent.getBroadcast(
+            context,
+            0,
+            Intent("com.miu.meditationapp.STOP"),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        // Create stop action
-        val stopAction = NotificationCompat.Action(
-            android.R.drawable.ic_menu_close_clear_cancel,
-            "Stop",
-            PendingIntent.getBroadcast(
-                context, 2,
-                Intent("com.miu.meditationapp.ACTION_STOP"),
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
+        // Create content intent
+        val contentIntent = PendingIntent.getActivity(
+            context,
+            0,
+            Intent(context, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         
-        return NotificationCompat.Builder(context, CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.nav_music)
             .setContentTitle(title)
-            .setContentText(if (isPlaying) "Playing" else "Paused")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentIntent(pendingIntent)
-            .addAction(playPauseAction)
-            .addAction(stopAction)
-            .setStyle(androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSession?.sessionToken))
+            .setContentText("Now Playing")
+            .setOngoing(isPlaying)
+            .setAutoCancel(false)
+            .setShowWhen(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
+            .setContentIntent(contentIntent)
+            .addAction(playPauseIcon, if (isPlaying) "Pause" else "Play", playPauseIntent)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", stopIntent)
+            .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mediaSession?.sessionToken)
+                .setShowActionsInCompactView(0, 1))
             .build()
+        
+        currentNotification = notification
+        return notification
+    }
+    
+    fun updateNotification(title: String, isPlaying: Boolean) {
+        val notification = createNotification(
+            title = title,
+            isPlaying = isPlaying,
+            onPlayPauseClick = {},
+            onStopClick = {}
+        )
+        notificationManager?.notify(NOTIFICATION_ID, notification)
     }
     
     fun updatePlaybackState(state: Int) {
@@ -117,8 +128,14 @@ class MusicNotificationManager(private val context: Context) {
         )
     }
     
+    fun cancelNotification() {
+        notificationManager?.cancel(NOTIFICATION_ID)
+        currentNotification = null
+    }
+    
     fun release() {
         mediaSession?.release()
         mediaSession = null
+        cancelNotification()
     }
 } 

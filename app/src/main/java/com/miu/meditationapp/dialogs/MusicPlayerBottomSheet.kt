@@ -101,7 +101,6 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
         binding.textTitle.text = songTitle
         updateTimeDisplay()
         updatePlayPauseButton(isPlaying)
-        updateFavoriteButton()
     }
     
     private fun updateTimeDisplay() {
@@ -111,22 +110,11 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
     private fun updatePlayPauseButton() {
         updatePlayPauseButton(isPlaying)
     }
-    
-    private fun updateFavoriteButton() {
-        binding.buttonFavorite.setImageResource(
-            if (isFavorite) android.R.drawable.btn_star_big_on
-            else android.R.drawable.btn_star_big_off
-        )
-    }
-    
+
     private fun setupClickListeners() {
         binding.buttonPlayPause.setOnClickListener {
             Log.d("MusicPlayerBottomSheet", "buttonPlayPause clicked")
             togglePlayPause()
-        }
-        
-        binding.buttonFavorite.setOnClickListener {
-            toggleFavorite()
         }
     }
     
@@ -149,7 +137,6 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
     
     private fun toggleFavorite() {
         isFavorite = !isFavorite
-        updateFavoriteButton()
         onFavoriteChanged?.invoke(isFavorite)
     }
     
@@ -211,4 +198,6 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
         
         _binding = null
     }
+
+    override fun getContext(): Context = requireContext()
 } 

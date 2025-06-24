@@ -19,6 +19,8 @@ class MusicPlayer(private val context: Context) {
     private var isPlaying = false
     private var currentPosition = 0
     private var currentDuration = 0
+    private var isPreparing = false
+    private var currentUri: Uri? = null
     
     // Callbacks
     var onPrepared: (() -> Unit)? = null
@@ -34,10 +36,17 @@ class MusicPlayer(private val context: Context) {
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
     
+    @Synchronized
     fun loadSong(uri: Uri, onPreparedCallback: (() -> Unit)? = null) {
         try {
-            // Check if file exists and is accessible
-            checkFileAccessibility(uri)
+            // If same song is loading, wait
+            if (isPreparing && uri == currentUri) {
+                Log.d("MusicPlayer", "Same song is already preparing, waiting...")
+                return
+            }
+            
+            currentUri = uri
+            isPreparing = true
             
             // Release any existing MediaPlayer
             release()
@@ -55,10 +64,33 @@ class MusicPlayer(private val context: Context) {
                     setAudioStreamType(AudioManager.STREAM_MUSIC)
                 }
                 
-                setDataSource(context, uri)
-                prepareAsync()
+                // For HTTP/HTTPS URLs, set proper headers and buffering
+                val headers = if (uri.scheme?.startsWith("http") == true) {
+                    HashMap<String, String>().apply {
+                        put("User-Agent", "MeditationApp/1.0")
+                    }
+                } else null
+                
+                // Set data source based on URI type
+                when {
+                    uri.scheme?.startsWith("http") == true -> {
+                        // Set larger buffer size for streaming
+                        setOnBufferingUpdateListener { _, percent ->
+                            Log.d("MusicPlayer", "Buffering: $percent%")
+                        }
+                        
+                        // Set network timeout and data source
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            setDataSource(context, uri, headers ?: emptyMap())
+                        } else {
+                            setDataSource(uri.toString())
+                        }
+                    }
+                    else -> setDataSource(context, uri)
+                }
                 
                 setOnPreparedListener {
+                    isPreparing = false
                     // Set initial volume to ensure audio is audible
                     setVolume(1.0f, 1.0f)
                     onPreparedCallback?.invoke()
@@ -72,11 +104,19 @@ class MusicPlayer(private val context: Context) {
                 
                 setOnErrorListener { mp, what, extra ->
                     Log.e("MusicPlayer", "MediaPlayer error: what=$what, extra=$extra, uri=$uri")
+                    isPreparing = false
                     this@MusicPlayer.isPlaying = false
+                    if (what == MediaPlayer.MEDIA_ERROR_UNSUPPORTED) {
+                        Log.e("MusicPlayer", "Unsupported format or URL error")
+                    }
                     onError?.invoke(what, extra) ?: true
                 }
+                
+                // Prepare asynchronously
+                prepareAsync()
             }
         } catch (e: Exception) {
+            isPreparing = false
             Log.e("MusicPlayer", "Error loading song: $uri", e)
             throw e
         }
@@ -117,32 +157,44 @@ class MusicPlayer(private val context: Context) {
         }
     }
     
+    @Synchronized
     fun play() {
         try {
+            if (isPreparing) {
+                Log.d("MusicPlayer", "Cannot play while preparing")
+                return
+            }
+            
             if (!(mediaPlayer?.isPlaying ?: false)) {
                 mediaPlayer?.start()
+                isPlaying = true
             }
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error playing", e)
         }
     }
     
+    @Synchronized
     fun pause() {
         try {
             if (mediaPlayer?.isPlaying ?: false) {
                 mediaPlayer?.pause()
+                isPlaying = false
             }
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error pausing", e)
         }
     }
     
+    @Synchronized
     fun stop() {
         try {
             if (mediaPlayer?.isPlaying ?: false) {
                 mediaPlayer?.stop()
             }
             mediaPlayer?.reset()
+            isPlaying = false
+            isPreparing = false
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error stopping", e)
         }
@@ -199,16 +251,19 @@ class MusicPlayer(private val context: Context) {
         mediaPlayer?.setVolume(leftVolume, rightVolume)
     }
     
+    @Synchronized
     fun release() {
         try {
             mediaPlayer?.let { player ->
-                if (player.isPlaying ?: false) {
+                if (player.isPlaying) {
                     player.stop()
                 }
                 player.release()
             }
             mediaPlayer = null
             isPlaying = false
+            isPreparing = false
+            currentUri = null
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error releasing MediaPlayer", e)
         }

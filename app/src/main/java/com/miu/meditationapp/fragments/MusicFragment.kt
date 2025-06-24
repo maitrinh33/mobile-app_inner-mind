@@ -17,15 +17,18 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.appcompat.widget.SearchView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.miu.meditationapp.R
 import com.miu.meditationapp.databinding.FragmentMusicBinding
+import com.miu.meditationapp.databinding.EmptyStateMusicBinding
 import com.miu.meditationapp.databases.SongEntity
 import com.miu.meditationapp.services.MusicServiceRefactored
 import com.miu.meditationapp.viewmodels.MusicViewModel
 import com.miu.meditationapp.adapters.ModernSongAdapter
+import com.miu.meditationapp.adapters.AdminSongAdapter
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -38,15 +41,18 @@ import com.google.firebase.auth.FirebaseAuth
 import android.content.ServiceConnection
 import android.content.ComponentName
 import android.os.IBinder
+import kotlinx.coroutines.*
 
 class MusicFragment : Fragment() {
     private var _binding: FragmentMusicBinding? = null
     private val binding get() = _binding!!
     private lateinit var viewModel: MusicViewModel
-    private lateinit var adapter: ModernSongAdapter
+    private lateinit var userSongAdapter: ModernSongAdapter
+    private lateinit var adminSongAdapter: AdminSongAdapter
     private lateinit var prefs: SharedPreferences
     private var hasMigrated = false
     private lateinit var auth: FirebaseAuth
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
     private val pickAudioLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
@@ -62,6 +68,17 @@ class MusicFragment : Fragment() {
         fun onAddSongClick(view: View) {
             // Get the fragment instance from our stored reference
             fragmentInstance?.launchSongPicker()
+        }
+    }
+
+    private val serviceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            val binder = service as? MusicServiceRefactored.MusicBinder
+            viewModel.setMusicService(binder?.getService())
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            viewModel.setMusicService(null)
         }
     }
 
@@ -85,8 +102,10 @@ class MusicFragment : Fragment() {
             MusicViewModel::class.java)
         prefs = requireContext().getSharedPreferences("music_favorites", 0)
         
-        setupRecyclerView()
-        setupSearchView()
+        // Verify database access
+        viewModel.verifyDatabaseAccess()
+        
+        setupViews()
         observeViewModel()
         setupClickListeners()
         
@@ -99,26 +118,51 @@ class MusicFragment : Fragment() {
             launchSongPicker()
         }
 
-        // Find the MaterialButton in the empty state layout and set its click listener
-        binding.emptyStateLayout.findViewById<MaterialButton>(R.id.btnEmptyStateAddSong)?.setOnClickListener {
+        // Set click listener for empty state add song button
+        binding.emptyStateLayout.btnEmptyStateAddSong.setOnClickListener {
+            launchSongPicker()
+        }
+    }
+
+    private fun setupViews() {
+        setupRecyclerView()
+        setupSearchView()
+        
+        // Show admin upload button if user is admin
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.isAdmin.collect { isAdmin ->
+                binding.fabAdminUpload.visibility = if (isAdmin) View.VISIBLE else View.GONE
+            }
+        }
+        
+        // Admin upload button click listener
+        binding.fabAdminUpload.setOnClickListener {
+            launchAdminSongPicker()
+        }
+
+        // Regular add song FAB click listener
+        binding.fabAddSong.setOnClickListener {
             launchSongPicker()
         }
     }
 
     private fun setupRecyclerView() {
-        adapter = ModernSongAdapter(
+        // Setup user songs adapter (list view)
+        userSongAdapter = ModernSongAdapter(
             onSongClick = { song -> onItemClick(song) },
-            onSongLongClick = { song -> showSongOptionsDialog(song); true },
-            onFavoriteClick = { song, isFavorite -> 
-                viewModel.toggleFavorite(song.id, isFavorite)
-            },
-            onEditClick = { song -> showEditSongDialog(song) },
-            onDeleteClick = { song -> showDeleteConfirmationDialog(song) }
+            onMoreOptionsClick = { song -> showUserSongOptionsDialog(song) }
         )
         
-        binding.recyclerViewSongs.apply {
+        // Setup admin songs adapter (grid view)
+        adminSongAdapter = AdminSongAdapter(
+            onSongClick = { song -> onItemClick(song) },
+            onMoreOptionsClick = { song -> showAdminSongOptionsDialog(song) }
+        )
+        
+        // Setup user songs RecyclerView (list)
+        binding.recyclerViewUserSongs.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = this@MusicFragment.adapter
+            adapter = userSongAdapter
             
             // Add swipe-to-delete functionality
             val swipeHandler = object : ItemTouchHelper.SimpleCallback(
@@ -127,8 +171,8 @@ class MusicFragment : Fragment() {
                 override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean = false
                 
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    val position = viewHolder.bindingAdapterPosition // Use bindingAdapterPosition instead of deprecated adapterPosition
-                    val song = this@MusicFragment.adapter.songs[position]
+                    val position = viewHolder.bindingAdapterPosition
+                    val song = userSongAdapter.songs[position]
                     when (direction) {
                         ItemTouchHelper.LEFT -> showDeleteConfirmationDialog(song)
                         ItemTouchHelper.RIGHT -> showEditSongDialog(song)
@@ -136,6 +180,12 @@ class MusicFragment : Fragment() {
                 }
             }
             ItemTouchHelper(swipeHandler).attachToRecyclerView(this)
+        }
+        
+        // Setup admin songs RecyclerView (grid)
+        binding.recyclerViewAdminSongs.apply {
+            layoutManager = GridLayoutManager(context, 2)
+            adapter = adminSongAdapter
         }
     }
 
@@ -153,14 +203,34 @@ class MusicFragment : Fragment() {
     }
 
     private fun observeViewModel() {
+        // Observe database access errors
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.databaseError.collectLatest { error ->
+                error?.let {
+                    Log.e("MusicFragment", "Database error", it)
+                    Toast.makeText(context, "Error loading songs: ${it.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.songs.collectLatest { songs ->
-                adapter.updateSongs(songs)
-                updateEmptyState(songs.isEmpty())
+                val userSongs = songs.filter { !it.isAdminSong }
+                val adminSongs = songs.filter { it.isAdminSong }
                 
-                // Migrate existing songs to internal storage (only once)
-                if (songs.isNotEmpty() && !hasMigrated) {
-                    migrateExistingSongs(songs)
+                userSongAdapter.updateSongs(userSongs)
+                adminSongAdapter.updateSongs(adminSongs)
+                
+                // Update visibility based on whether there are songs
+                binding.apply {
+                    userSongsSection.visibility = if (userSongs.isNotEmpty()) View.VISIBLE else View.GONE
+                    adminSongsSection.visibility = if (adminSongs.isNotEmpty()) View.VISIBLE else View.GONE
+                    emptyStateLayout.root.visibility = if (songs.isEmpty()) View.VISIBLE else View.GONE
+                }
+                
+                // Prefetch URLs for admin songs
+                if (adminSongs.isNotEmpty()) {
+                    viewModel.prefetchAdminSongUrls(adminSongs)
                 }
             }
         }
@@ -170,16 +240,41 @@ class MusicFragment : Fragment() {
                 updateSongCount(count)
             }
         }
+
+        // Observe current playing song
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentPlayingSong.collectLatest { currentSong ->
+                currentSong?.let { song ->
+                    if (song.isAdminSong) {
+                        // Clear loading state when song starts playing
+                        adminSongAdapter.setLoading(song.id.toInt(), false)
+                    }
+                }
+            }
+        }
+
+        // Observe playback errors
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.playbackError.collectLatest { error ->
+                error?.let { (songId, message) ->
+                    // Clear loading state on error
+                    adminSongAdapter.setLoading(songId, false)
+                    if (!message.contains("Cancelled")) { // Don't show error for cancelled songs
+                        Toast.makeText(context, "Playback error: $message", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
     }
 
     private fun updateEmptyState(isEmpty: Boolean) {
         binding.apply {
             if (isEmpty) {
-                emptyStateLayout.visibility = View.VISIBLE
-                recyclerViewSongs.visibility = View.GONE
+                emptyStateLayout.root.visibility = View.VISIBLE
+                recyclerViewUserSongs.visibility = View.GONE
             } else {
-                emptyStateLayout.visibility = View.GONE
-                recyclerViewSongs.visibility = View.VISIBLE
+                emptyStateLayout.root.visibility = View.GONE
+                recyclerViewUserSongs.visibility = View.VISIBLE
             }
         }
     }
@@ -190,6 +285,8 @@ class MusicFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        // Clear any stale loading states
+        adminSongAdapter.clearLoadingStates()
     }
 
     override fun onPause() {
@@ -207,13 +304,6 @@ class MusicFragment : Fragment() {
         // Check if user is logged in
         if (auth.currentUser == null) {
             Toast.makeText(context, "Please sign in to add songs", Toast.LENGTH_SHORT).show()
-            return
-        }
-        
-        // Copy file to internal storage to avoid permission issues
-        val internalUri = copyFileToInternalStorage(uri)
-        if (internalUri == null) {
-            Toast.makeText(context, "Could not access this file", Toast.LENGTH_SHORT).show()
             return
         }
         
@@ -246,6 +336,61 @@ class MusicFragment : Fragment() {
             Toast.makeText(context, "Could not read song metadata", Toast.LENGTH_SHORT).show()
         } finally {
             mmr.release()
+        }
+
+        // Handle admin song upload
+        if (viewModel.isAdmin.value) {
+            try {
+                // Show upload progress dialog
+                val progressDialog = MaterialAlertDialogBuilder(context)
+                    .setTitle("Uploading Admin Song")
+                    .setMessage("Starting upload...")
+                    .setCancelable(false)
+                    .create()
+                progressDialog.show()
+
+                // Read the input stream before passing it to the upload function
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream == null) {
+                    progressDialog.dismiss()
+                    Toast.makeText(context, "Could not read song file", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
+                val fileName = "admin_song_${System.currentTimeMillis()}.mp3"
+                viewModel.uploadAdminSong(
+                    inputStream = inputStream,
+                    fileName = fileName,
+                    title = title,
+                    artist = artist,
+                    album = album,
+                    duration = duration,
+                    fileSize = fileSize,
+                    onProgress = { progress ->
+                        progressDialog.setMessage("Uploading: $progress%")
+                    },
+                    onSuccess = { song ->
+                        progressDialog.dismiss()
+                        Snackbar.make(binding.root, "Admin song added: ${song.title}", Snackbar.LENGTH_SHORT).show()
+                    },
+                    onError = { e ->
+                        progressDialog.dismiss()
+                        Toast.makeText(context, "Failed to upload admin song: ${e.message}", Toast.LENGTH_SHORT).show()
+                        Log.e("MusicFragment", "Failed to upload admin song", e)
+                    }
+                )
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to read song file: ${e.message}", Toast.LENGTH_SHORT).show()
+                Log.e("MusicFragment", "Failed to read song file", e)
+            }
+            return
+        }
+
+        // Regular user song upload
+        val internalUri = copyFileToInternalStorage(uri)
+        if (internalUri == null) {
+            Toast.makeText(context, "Could not access this file", Toast.LENGTH_SHORT).show()
+            return
         }
         
         val song = SongEntity(
@@ -370,11 +515,25 @@ class MusicFragment : Fragment() {
     }
 
     private fun onItemClick(song: SongEntity) {
-        startPlayingSong(song.title, song.uri, song.duration)
-        viewModel.incrementPlayCount(song.id)
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                if (song.isAdminSong) {
+                    // Clear any existing loading states first
+                    adminSongAdapter.clearLoadingStates()
+                    // Set loading state for clicked song
+                    adminSongAdapter.setLoading(song.id.toInt(), true)
+                }
+                viewModel.playSong(song)
+            } catch (e: Exception) {
+                if (song.isAdminSong) {
+                    adminSongAdapter.setLoading(song.id.toInt(), false)
+                }
+                Toast.makeText(context, "Error playing song: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
-    private fun showSongOptionsDialog(song: SongEntity) {
+    private fun showUserSongOptionsDialog(song: SongEntity) {
         val options = arrayOf("Edit", "Delete", "Add to Favorites", "Share")
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(song.title)
@@ -387,6 +546,31 @@ class MusicFragment : Fragment() {
                 }
             }
             .show()
+    }
+
+    private fun showAdminSongOptionsDialog(song: SongEntity) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isAdmin = viewModel.isAdmin.value
+            val options = if (isAdmin) {
+                arrayOf("Edit", "Delete", "Add to Favorites", "Share")
+            } else {
+                arrayOf("Add to Favorites", "Share")
+            }
+
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(song.title)
+                .setItems(options) { _, which ->
+                    when {
+                        isAdmin && which == 0 -> showEditSongDialog(song)
+                        isAdmin && which == 1 -> showDeleteConfirmationDialog(song)
+                        isAdmin && which == 2 -> viewModel.toggleFavorite(song.id.toInt(), !song.isFavorite)
+                        isAdmin && which == 3 -> shareSong(song)
+                        !isAdmin && which == 0 -> viewModel.toggleFavorite(song.id.toInt(), !song.isFavorite)
+                        !isAdmin && which == 1 -> shareSong(song)
+                    }
+                }
+                .show()
+        }
     }
 
     private fun showEditSongDialog(song: SongEntity) {
@@ -471,12 +655,32 @@ class MusicFragment : Fragment() {
         pickAudioLauncher.launch("audio/*")
     }
 
+    private fun launchAdminSongPicker() {
+        if (!viewModel.isAdmin.value) {
+            Toast.makeText(context, "Only admins can upload songs", Toast.LENGTH_SHORT).show()
+            return
+        }
+        pickAudioLauncher.launch("audio/*")
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Bind to MusicService
+        Intent(requireContext(), MusicServiceRefactored::class.java).also { intent ->
+            requireContext().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Unbind from MusicService
+        requireContext().unbindService(serviceConnection)
+        viewModel.setMusicService(null)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        // Clear the fragment instance when the view is destroyed
-        if (fragmentInstance == this) {
-            fragmentInstance = null
-        }
+        coroutineScope.cancel()
         _binding = null
     }
 } 

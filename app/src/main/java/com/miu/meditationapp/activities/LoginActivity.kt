@@ -64,8 +64,18 @@ class LoginActivity : AppCompatActivity() {
             val email = binding.inputEmail.text.toString().trim()
             val pwd = binding.inputPassword.text.toString().trim()
 
-            if (TextUtils.isEmpty(email) || TextUtils.isEmpty(pwd)) {
-                Toast.makeText(this, "Please enter your credentials", Toast.LENGTH_SHORT).show()
+            if (TextUtils.isEmpty(email)) {
+                binding.inputEmail.error = "Email is required"
+                return@setOnClickListener
+            }
+
+            if (TextUtils.isEmpty(pwd)) {
+                binding.inputPassword.error = "Password is required"
+                return@setOnClickListener
+            }
+
+            if (pwd.length < 6) {
+                binding.inputPassword.error = "Password must be at least 6 characters"
                 return@setOnClickListener
             }
 
@@ -75,7 +85,17 @@ class LoginActivity : AppCompatActivity() {
                     checkUserRoleAndProceed()
                 } else {
                     binding.progressbar.visibility = View.GONE
-                    Toast.makeText(this, "Email or Password is wrong. Please try again.", Toast.LENGTH_SHORT).show()
+                    val errorMessage = when (task.exception?.message) {
+                        "There is no user record corresponding to this identifier. The user may have been deleted." ->
+                            "No account found with this email. Please register first."
+                        "The password is invalid or the user does not have a password." ->
+                            "Incorrect password. Please try again or use 'Forgot Password'"
+                        "A network error (such as timeout, interrupted connection or unreachable host) has occurred." ->
+                            "Network error. Please check your internet connection."
+                        else -> task.exception?.message ?: "Login failed. Please try again."
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+                    Log.e(TAG, "Login failed", task.exception)
                 }
             }
         }
@@ -88,19 +108,30 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        val database = com.google.firebase.database.FirebaseDatabase.getInstance().getReference("users")
-        database.child(user.uid).get().addOnSuccessListener { snapshot ->
-            binding.progressbar.visibility = View.GONE
-            if (snapshot.exists() && snapshot.child("isAdmin").value == true) {
-                Toast.makeText(this, "Welcome Admin!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Login Successful..", Toast.LENGTH_SHORT).show()
+        // Use offline persistence
+        val database = com.google.firebase.database.FirebaseDatabase.getInstance()
+        database.setPersistenceEnabled(true)
+        
+        // Get cached data first
+        val userRef = database.getReference("users").child(user.uid)
+        userRef.keepSynced(true)
+        
+        userRef.get().addOnSuccessListener { snapshot ->
+            if (!isFinishing) {  // Check if activity is still active
+                binding.progressbar.visibility = View.GONE
+                if (snapshot.exists() && snapshot.child("isAdmin").value == true) {
+                    Toast.makeText(this, "Welcome Admin!", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Login Successful..", Toast.LENGTH_SHORT).show()
+                }
+                startMainActivity()
             }
-            startMainActivity()
         }.addOnFailureListener {
-            binding.progressbar.visibility = View.GONE
-            Toast.makeText(this, "Login successful, but failed to fetch user data.", Toast.LENGTH_SHORT).show()
-            startMainActivity() // Proceed anyway
+            if (!isFinishing) {  // Check if activity is still active
+                binding.progressbar.visibility = View.GONE
+                Toast.makeText(this, "Login successful, but failed to fetch user data.", Toast.LENGTH_SHORT).show()
+                startMainActivity() // Proceed anyway
+            }
         }
     }
 
@@ -187,5 +218,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun isSeenOnboard(): Boolean {
         return preferences.getBoolean("ISCOMPLETE", false)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Cleanup resources
+        binding.progressbar.visibility = View.GONE
+        mGoogleSignInClient.signOut()
     }
 } 

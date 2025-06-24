@@ -10,17 +10,21 @@ import android.util.Log
 /**
  * Handles audio focus management
  */
-class AudioFocusManager(private val context: Context) {
+class AudioFocusManager(
+    private val context: Context,
+    private val onFocusChange: (Int) -> Unit
+) {
     
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
     private var hasAudioFocus = false
     
-    // Callbacks
-    var onAudioFocusLost: (() -> Unit)? = null
-    var onAudioFocusGained: (() -> Unit)? = null
-    var onAudioFocusLostTransient: (() -> Unit)? = null
-    var onAudioFocusLostTransientCanDuck: (() -> Unit)? = null
+    companion object {
+        const val AUDIOFOCUS_GAIN = AudioManager.AUDIOFOCUS_GAIN
+        const val AUDIOFOCUS_LOSS = AudioManager.AUDIOFOCUS_LOSS
+        const val AUDIOFOCUS_LOSS_TRANSIENT = AudioManager.AUDIOFOCUS_LOSS_TRANSIENT
+        const val AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK = AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK
+    }
     
     init {
         setupAudioManager()
@@ -36,23 +40,20 @@ class AudioFocusManager(private val context: Context) {
             AudioManager.AUDIOFOCUS_LOSS -> {
                 Log.d("AudioFocusManager", "Audio focus lost permanently")
                 hasAudioFocus = false
-                onAudioFocusLost?.invoke()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 Log.d("AudioFocusManager", "Audio focus lost temporarily")
                 hasAudioFocus = false
-                onAudioFocusLostTransient?.invoke()
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
                 Log.d("AudioFocusManager", "Audio focus gained")
                 hasAudioFocus = true
-                onAudioFocusGained?.invoke()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                 Log.d("AudioFocusManager", "Audio focus lost temporarily, can duck")
-                onAudioFocusLostTransientCanDuck?.invoke()
             }
         }
+        onFocusChange(focusChange)
     }
     
     fun requestAudioFocus(): Boolean {
