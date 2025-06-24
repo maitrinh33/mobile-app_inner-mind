@@ -31,6 +31,6 @@
         app:civ_border_color="@android:color/black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:drawable/btn_star_big_on" />
+        app:srcCompat="@drawable/onboarding_community" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -17,6 +17,7 @@ import android.widget.Toast
 import com.miu.meditationapp.services.music.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
 
@@ -27,22 +28,25 @@ import com.google.firebase.auth.FirebaseAuth
 class MusicServiceRefactored : Service() {
     
     // Modular components
-    private lateinit var musicPlayer: MusicPlayer
-    private lateinit var audioFocusManager: AudioFocusManager
-    private lateinit var stateManager: MusicStateManager
-    private lateinit var notificationManager: MusicNotificationManager
-    private lateinit var broadcastManager: MusicBroadcastManager
+    private var musicPlayer: MusicPlayer? = null
+    private var musicStateManager: MusicStateManager? = null
+    private var musicNotificationManager: MusicNotificationManager? = null
+    private var musicBroadcastManager: MusicBroadcastManager? = null
+    private var audioFocusManager: AudioFocusManager? = null
     
     // Service state
-    private var currentSongId = ""
-    private var currentSongTitle = ""
-    private var currentSongUri: Uri? = null
-    private var currentSongDuration = ""
+    private var currentSongId: String = ""
+    private var currentTitle: String = ""
+    private var currentUri: Uri? = null
+    private var currentDuration: String = ""
     private var isPlaying = false
     private var shouldAutoPlay = false // Flag to track if song should auto-play
     
     private val binder = MusicBinder()
     private val handler = Handler(Looper.getMainLooper())
+    
+    private val serviceJob = SupervisorJob()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
     
     companion object {
         const val ACTION_PLAY = "com.miu.meditationapp.PLAY"
@@ -60,22 +64,24 @@ class MusicServiceRefactored : Service() {
     private val progressUpdater = object : Runnable {
         override fun run() {
             try {
-                if (musicPlayer.isPlaying()) {
-                    val position = musicPlayer.getCurrentPosition()
-                    val duration = musicPlayer.getDuration()
+                if (musicPlayer?.isPlaying() == true) {
+                    val position = musicPlayer?.getCurrentPosition() ?: 0
+                    val duration = musicPlayer?.getDuration() ?: 0
                     
                     // Send progress broadcast on background thread
                     handler.post {
-                        broadcastManager.sendProgressBroadcast(
-                            position, duration, isPlaying,
-                            currentSongId, currentSongTitle
+                        musicBroadcastManager?.broadcastProgress(
+                            songId = currentSongId,
+                            currentPosition = position,
+                            duration = duration,
+                            isPlaying = isPlaying
                         )
                     }
                     
                     // Save state every 10 seconds (reduced frequency)
                     if (position % 15000 < 1000) {
                         handler.post {
-                            saveCurrentState()
+                            saveCurrentState(isPlaying)
                         }
                     }
                     
@@ -93,12 +99,28 @@ class MusicServiceRefactored : Service() {
     override fun onCreate() {
         super.onCreate()
         
-        // Initialize modular components
-        musicPlayer = MusicPlayer(this)
-        audioFocusManager = AudioFocusManager(this)
-        stateManager = MusicStateManager(this)
-        notificationManager = MusicNotificationManager(this)
-        broadcastManager = MusicBroadcastManager
+        musicPlayer = MusicPlayer(this).apply {
+            onPrepared = {
+                handlePrepared()
+            }
+            onCompletion = {
+                handleCompletion()
+            }
+            onError = { what, extra ->
+                handleError(what, extra)
+                true
+            }
+            onProgressUpdate = { position, duration ->
+                handleProgressUpdate(position, duration)
+            }
+        }
+        
+        musicStateManager = MusicStateManager(this)
+        musicNotificationManager = MusicNotificationManager(this)
+        musicBroadcastManager = MusicBroadcastManager.getInstance(this)
+        audioFocusManager = AudioFocusManager(this) { focusChange ->
+            handleAudioFocusChange(focusChange)
+        }
         
         // Setup callbacks
         setupAudioFocusCallbacks()
@@ -108,43 +130,46 @@ class MusicServiceRefactored : Service() {
         // Start foreground service
         startForeground(
             MusicNotificationManager.NOTIFICATION_ID,
-            notificationManager.createNotification("", false, {}, {})
+            musicNotificationManager?.createNotification("", false, {}, {})
         )
+        
+        // Restore previous state if any
+        restorePreviousState()
     }
     
     private fun setupAudioFocusCallbacks() {
-        audioFocusManager.onAudioFocusLost = { pause() }
-        audioFocusManager.onAudioFocusLostTransient = { pause() }
-        audioFocusManager.onAudioFocusGained = { /* Let user decide */ }
-        audioFocusManager.onAudioFocusLostTransientCanDuck = {
-            musicPlayer.setVolume(0.3f, 0.3f)
-        }
+        // No longer needed as we're using the callback in constructor
     }
     
     private fun setupMusicPlayerCallbacks() {
-        musicPlayer.onPrepared = {
+        musicPlayer?.onPrepared = {
             if (shouldAutoPlay) {
-                if (audioFocusManager.requestAudioFocus()) {
-                    musicPlayer.play()
+                if (audioFocusManager?.requestAudioFocus() == true) {
+                    musicPlayer?.play()
                     isPlaying = true
                     updateUI()
                     startProgressUpdates()
-                    saveCurrentState()
+                    saveCurrentState(isPlaying)
                 }
             } else {
                 updateUI()
-                broadcastManager.sendStateBroadcast(isPlaying, currentSongId, currentSongTitle, currentSongDuration)
+                musicBroadcastManager?.broadcastSongState(
+                    songId = currentSongId,
+                    title = currentTitle,
+                    duration = currentDuration,
+                    isPlaying = isPlaying
+                )
             }
         }
         
-        musicPlayer.onCompletion = {
+        musicPlayer?.onCompletion = {
             isPlaying = false
             updateUI()
             stopProgressUpdates()
-            stateManager.clearState()
+            musicStateManager?.clearState()
         }
         
-        musicPlayer.onError = { what, extra ->
+        musicPlayer?.onError = { what, extra ->
             Log.e("MusicService", "MediaPlayer error: what=$what, extra=$extra")
             isPlaying = false
             updateUI()
@@ -183,14 +208,12 @@ class MusicServiceRefactored : Service() {
             ACTION_PAUSE -> pause()
             ACTION_STOP -> stopSelf()
             ACTION_PLAY_SONG -> {
-                val songId = intent.getStringExtra("songId") ?: ""
-                val title = intent.getStringExtra("title") ?: ""
-                val uri = intent.getStringExtra("uri") ?: ""
-                val duration = intent.getStringExtra("duration") ?: ""
+                val songId = intent.getStringExtra("songId") ?: return START_NOT_STICKY
+                val title = intent.getStringExtra("title") ?: return START_NOT_STICKY
+                val uriString = intent.getStringExtra("uri") ?: return START_NOT_STICKY
+                val duration = intent.getStringExtra("duration") ?: return START_NOT_STICKY
                 
-                if (songId.isNotEmpty() && uri.isNotEmpty()) {
-                    playSongById(songId, title, uri, duration)
-                }
+                playSong(songId, title, Uri.parse(uriString), duration)
             }
             ACTION_SEEK -> {
                 val position = intent.getIntExtra("position", 0)
@@ -208,67 +231,76 @@ class MusicServiceRefactored : Service() {
         return START_STICKY
     }
     
-    fun playSongById(songId: String, title: String, uri: String, duration: String) {
-        val effectiveTitle = if (title.isNotEmpty()) title else "Unknown Song"
-        
-        if (currentSongId == songId) {
-            if (isPlaying) pause() else play()
-        } else {
-            switchToSong(songId, effectiveTitle, Uri.parse(uri), duration)
-        }
-    }
-    
-    private fun switchToSong(songId: String, title: String, uri: Uri, duration: String) {
-        // Abandon current audio focus before switching
-        audioFocusManager.abandonAudioFocus()
-        
-        saveCurrentState()
-        stopProgressUpdates()
-        
-        // Reset playing state for new song
-        isPlaying = false
-        shouldAutoPlay = false
-        
-        currentSongId = songId
-        currentSongTitle = title
-        currentSongUri = uri
-        currentSongDuration = duration
-        
-        // Send initial state broadcast with isPlaying=false
-        broadcastManager.sendStateBroadcast(false, currentSongId, currentSongTitle, currentSongDuration)
-        
+    private fun playSong(songId: String, title: String, uri: Uri, duration: String) {
         try {
-            musicPlayer.loadSong(uri) {
-                // onPrepared callback will handle the rest
+            currentSongId = songId
+            currentTitle = title
+            currentUri = uri
+            currentDuration = duration
+            shouldAutoPlay = true  // Set this flag to true before loading song
+            
+            // Request audio focus before playing
+            if (!audioFocusManager?.requestAudioFocus()!!) {
+                Log.e("MusicService", "Could not get audio focus")
+                return
+            }
+            
+            musicPlayer?.loadSong(uri) {
+                // Start playback when prepared
+                musicPlayer?.play()
+                isPlaying = true  // Set playing state immediately
+                
+                // Update notification
+                musicNotificationManager?.updateNotification(
+                    title = title,
+                    isPlaying = true
+                )
+                
+                // Broadcast state
+                musicBroadcastManager?.broadcastSongState(
+                    songId = songId,
+                    title = title,
+                    duration = duration,
+                    isPlaying = true
+                )
+                
+                // Save state
+                saveCurrentState(isPlaying = true)
             }
         } catch (e: Exception) {
-            Log.e("MusicService", "Error loading song: $title", e)
+            Log.e("MusicService", "Error playing song", e)
+            // Reset flags and broadcast error state
+            shouldAutoPlay = false
             isPlaying = false
-            updateUI()
-            broadcastManager.sendStateBroadcast(false, currentSongId, currentSongTitle, currentSongDuration)
+            musicBroadcastManager?.broadcastSongState(
+                songId = songId,
+                title = title,
+                duration = duration,
+                isPlaying = false
+            )
         }
     }
     
     fun play() {
         if (!isPlaying) {
-            if (audioFocusManager.requestAudioFocus()) {
+            if (audioFocusManager?.requestAudioFocus() == true) {
                 try {
-                    if (musicPlayer.isReady()) {
-                        musicPlayer.play()
+                    if (musicPlayer?.isReady() == true) {
+                        musicPlayer?.play()
                         isPlaying = true
                         updateUI()
                         startProgressUpdates()
-                        saveCurrentState()
+                        saveCurrentState(isPlaying)
                         
                         // Increment play count when starting playback
                         incrementPlayCount()
                     } else {
-                        audioFocusManager.abandonAudioFocus()
+                        audioFocusManager?.abandonAudioFocus()
                     }
                 } catch (e: Exception) {
                     Log.e("MusicService", "Error starting playback", e)
                     isPlaying = false
-                    audioFocusManager.abandonAudioFocus()
+                    audioFocusManager?.abandonAudioFocus()
                     updateUI()
                 }
             }
@@ -277,34 +309,39 @@ class MusicServiceRefactored : Service() {
     
     fun pause() {
         if (isPlaying) {
-            musicPlayer.pause()
+            musicPlayer?.pause()
             isPlaying = false
             updateUI()
             stopProgressUpdates()
-            saveCurrentState()
+            saveCurrentState(isPlaying)
         }
     }
     
     fun seekTo(position: Int) {
-        musicPlayer.seekTo(position)
-        saveCurrentState()
+        musicPlayer?.seekTo(position)
+        saveCurrentState(isPlaying)
     }
     
     private fun updateUI() {
-        notificationManager.updatePlaybackState(
+        musicNotificationManager?.updatePlaybackState(
             if (isPlaying) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
         )
         
         startForeground(
             MusicNotificationManager.NOTIFICATION_ID,
-            notificationManager.createNotification(
-                currentSongTitle, isPlaying,
+            musicNotificationManager?.createNotification(
+                currentTitle, isPlaying,
                 { if (isPlaying) pause() else play() },
                 { stopSelf() }
             )
         )
         
-        broadcastManager.sendStateBroadcast(isPlaying, currentSongId, currentSongTitle, currentSongDuration)
+        musicBroadcastManager?.broadcastSongState(
+            songId = currentSongId,
+            title = currentTitle,
+            duration = currentDuration,
+            isPlaying = isPlaying
+        )
     }
     
     private fun startProgressUpdates() {
@@ -315,27 +352,37 @@ class MusicServiceRefactored : Service() {
         handler.removeCallbacks(progressUpdater)
     }
     
-    private fun saveCurrentState() {
-        currentSongUri?.let { uri ->
-            stateManager.saveState(
-                currentSongId, currentSongTitle, uri,
-                currentSongDuration, musicPlayer.getCurrentPosition(), isPlaying
-            )
+    private fun saveCurrentState(isPlaying: Boolean) {
+        currentUri?.let { uri ->
+            serviceScope.launch {
+                try {
+                    musicStateManager?.saveState(
+                        songId = currentSongId,
+                        title = currentTitle,
+                        uri = uri,
+                        duration = currentDuration,
+                        position = musicPlayer?.getCurrentPosition() ?: 0,
+                        isPlaying = isPlaying
+                    )
+                } catch (e: Exception) {
+                    Log.e("MusicService", "Error saving state", e)
+                }
+            }
         }
     }
     
     private fun restoreState(): Boolean {
-        val state = stateManager.restoreState()
+        val state = musicStateManager?.getState()
         return if (state != null) {
             currentSongId = state.songId
-            currentSongTitle = state.title
-            currentSongUri = Uri.parse(state.uri)
-            currentSongDuration = state.duration
+            currentTitle = state.title
+            currentUri = Uri.parse(state.uri)
+            currentDuration = state.duration
             isPlaying = false // Start paused
             shouldAutoPlay = false // Don't auto-play restored songs
             
-            musicPlayer.loadSong(Uri.parse(state.uri)) {
-                musicPlayer.seekTo(state.position)
+            musicPlayer?.loadSong(Uri.parse(state.uri)) {
+                musicPlayer?.seekTo(state.position)
                 updateUI()
                 // Don't auto-play, let user decide
             }
@@ -346,14 +393,29 @@ class MusicServiceRefactored : Service() {
     }
     
     private fun sendCurrentState() {
-        broadcastManager.sendStateBroadcast(isPlaying, currentSongId, currentSongTitle, currentSongDuration)
+        musicBroadcastManager?.broadcastSongState(
+            songId = currentSongId,
+            title = currentTitle,
+            duration = currentDuration,
+            isPlaying = isPlaying
+        )
         
         if (isPlaying) {
-            val position = musicPlayer.getCurrentPosition()
-            val duration = musicPlayer.getDuration()
-            broadcastManager.sendProgressBroadcast(position, duration, isPlaying, currentSongId, currentSongTitle)
+            val position = musicPlayer?.getCurrentPosition() ?: 0
+            val duration = musicPlayer?.getDuration() ?: 0
+            musicBroadcastManager?.broadcastProgress(
+                songId = currentSongId,
+                currentPosition = position,
+                duration = duration,
+                isPlaying = isPlaying
+            )
         } else {
-            broadcastManager.sendProgressBroadcast(0, 0, false, currentSongId, currentSongTitle)
+            musicBroadcastManager?.broadcastProgress(
+                songId = currentSongId,
+                currentPosition = 0,
+                duration = 0,
+                isPlaying = false
+            )
         }
     }
     
@@ -361,7 +423,7 @@ class MusicServiceRefactored : Service() {
         try {
             val songId = currentSongId.toIntOrNull()
             if (songId != null) {
-                CoroutineScope(Dispatchers.IO).launch {
+                serviceScope.launch {
                     try {
                         val db = com.miu.meditationapp.databases.MusicDatabase.getInstance(this@MusicServiceRefactored)
                         val userId = FirebaseAuth.getInstance().currentUser?.uid ?: return@launch
@@ -376,17 +438,80 @@ class MusicServiceRefactored : Service() {
         }
     }
     
+    private fun handlePrepared() {
+        // Start playback immediately after preparation
+        musicPlayer?.play()
+    }
+    
+    private fun handleCompletion() {
+        stopPlayback()
+    }
+    
+    private fun handleError(what: Int, extra: Int) {
+        Log.e("MusicService", "MediaPlayer error: what=$what, extra=$extra")
+        stopPlayback()
+    }
+    
+    private fun handleProgressUpdate(position: Int, duration: Int) {
+        musicBroadcastManager?.broadcastProgress(
+            songId = currentSongId,
+            currentPosition = position,
+            duration = duration,
+            isPlaying = musicPlayer?.isPlaying() ?: false
+        )
+    }
+    
+    private fun handleAudioFocusChange(focusChange: Int) {
+        when (focusChange) {
+            AudioFocusManager.AUDIOFOCUS_LOSS,
+            AudioFocusManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                pause()
+            }
+            AudioFocusManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                musicPlayer?.setVolume(0.3f, 0.3f)
+            }
+            AudioFocusManager.AUDIOFOCUS_GAIN -> {
+                musicPlayer?.setVolume(1.0f, 1.0f)
+                play()
+            }
+        }
+    }
+    
+    private fun stopPlayback() {
+        musicPlayer?.stop()
+        musicNotificationManager?.cancelNotification()
+        audioFocusManager?.abandonAudioFocus()
+        musicStateManager?.clearState()
+        stopSelf()
+    }
+    
+    private fun restorePreviousState() {
+        val state = musicStateManager?.getState()
+        if (state != null) {
+            playSong(
+                songId = state.songId,
+                title = state.title,
+                uri = Uri.parse(state.uri),
+                duration = state.duration
+            )
+            musicPlayer?.seekTo(state.position)
+            if (!state.isPlaying) {
+                pause()
+            }
+        }
+    }
+    
     override fun onBind(intent: Intent?): IBinder = binder
     
     override fun onDestroy() {
         super.onDestroy()
         
-        saveCurrentState()
+        saveCurrentState(isPlaying)
         
         try {
-            musicPlayer.release()
-            audioFocusManager.abandonAudioFocus()
-            notificationManager.release()
+            musicPlayer?.release()
+            audioFocusManager?.abandonAudioFocus()
+            musicNotificationManager?.release()
             // No need to unregister broadcast receiver since we're using singleton approach
         } catch (e: Exception) {
             Log.e("MusicService", "Error in onDestroy", e)

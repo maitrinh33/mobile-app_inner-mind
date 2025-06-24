@@ -17,5 +17,7 @@ data class SongEntity(
     val playCount: Int = 0,
     val fileSize: Long = 0L,
     val artist: String = "Unknown Artist",
-    val album: String = "Unknown Album"
+    val album: String = "Unknown Album",
+    val isAdminSong: Boolean = false,
+    val firebaseId: String? = null // To store Firebase document ID for admin songs
 ) 

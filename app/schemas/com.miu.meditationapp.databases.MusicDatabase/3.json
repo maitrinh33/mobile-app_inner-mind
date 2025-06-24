@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "e0c0b6a3d268e9ad1efa31b525231b0d",
+    "identityHash": "3db449384f4f43e2d3eebad94a0a3022",
     "entities": [
       {
         "tableName": "songs",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` TEXT NOT NULL, `title` TEXT NOT NULL, `duration` TEXT NOT NULL, `uri` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `dateAdded` INTEGER NOT NULL, `lastPlayed` INTEGER, `playCount` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `artist` TEXT NOT NULL, `album` TEXT NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `userId` TEXT NOT NULL, `title` TEXT NOT NULL, `duration` TEXT NOT NULL, `uri` TEXT NOT NULL, `isFavorite` INTEGER NOT NULL, `dateAdded` INTEGER NOT NULL, `lastPlayed` INTEGER, `playCount` INTEGER NOT NULL, `fileSize` INTEGER NOT NULL, `artist` TEXT NOT NULL, `album` TEXT NOT NULL, `isAdminSong` INTEGER NOT NULL, `firebaseId` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -79,6 +79,18 @@
             "columnName": "album",
             "affinity": "TEXT",
             "notNull": true
+          },
+          {
+            "fieldPath": "isAdminSong",
+            "columnName": "isAdminSong",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firebaseId",
+            "columnName": "firebaseId",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -94,7 +106,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e0c0b6a3d268e9ad1efa31b525231b0d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3db449384f4f43e2d3eebad94a0a3022')"
     ]
   }
 }

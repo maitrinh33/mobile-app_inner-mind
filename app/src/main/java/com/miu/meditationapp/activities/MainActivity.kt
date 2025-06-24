@@ -26,6 +26,7 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Process
 import java.lang.Runtime
+import android.content.ComponentCallbacks2
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -86,8 +87,8 @@ class MainActivity : AppCompatActivity() {
             binding = ActivityMainBinding.inflate(layoutInflater)
             setContentView(binding.root)
 
-            // Initialize MusicBroadcastManager singleton
-            MusicBroadcastManager.init(applicationContext)
+            // Initialize broadcast manager
+            MusicBroadcastManager.init(this)
 
             // Initialize ViewModel
             viewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
@@ -109,6 +110,9 @@ class MainActivity : AppCompatActivity() {
             setupViewPager()
             logMemoryUsage()
             Log.d(TAG, "onCreate completed successfully")
+
+            // Monitor memory usage
+            startMemoryMonitoring()
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate", e)
             throw e // Re-throw to ensure proper error reporting
@@ -184,6 +188,11 @@ class MainActivity : AppCompatActivity() {
         if (!isCleaningUp) {
             cleanupResources()
         }
+        handler.removeCallbacksAndMessages(null)
+        coroutineScope.cancel()
+        musicPlayerBarManager.cleanup()
+        binding.viewPager.adapter = null
+        viewPagerAdapter = null
     }
 
     override fun onTrimMemory(level: Int) {
@@ -201,14 +210,8 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "onTrimMemory called with level: $levelString")
         logMemoryUsage()
 
-        when (level) {
-            TRIM_MEMORY_RUNNING_CRITICAL,
-            TRIM_MEMORY_RUNNING_LOW,
-            TRIM_MEMORY_RUNNING_MODERATE -> {
-                if (!isCleaningUp) {
-                    cleanupResources()
-                }
-            }
+        if (level >= ComponentCallbacks2.TRIM_MEMORY_MODERATE) {
+            cleanupResources()
         }
     }
 
@@ -216,88 +219,52 @@ class MainActivity : AppCompatActivity() {
         super.onLowMemory()
         Log.d(TAG, "onLowMemory called")
         logMemoryUsage()
-        if (!isCleaningUp) {
-            cleanupResources()
-        }
+        cleanupResources()
+    }
+
+    private fun startMemoryMonitoring() {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastMemoryLogTime >= MEMORY_LOG_INTERVAL) {
+                    val runtime = Runtime.getRuntime()
+                    val usedMemInMB = (runtime.totalMemory() - runtime.freeMemory()) / 1048576L
+                    val maxHeapSizeInMB = runtime.maxMemory() / 1048576L
+                    val availableHeapSizeInMB = maxHeapSizeInMB - usedMemInMB
+                    
+                    Log.d(TAG, "Memory - Used: ${usedMemInMB}MB, Available: ${availableHeapSizeInMB}MB, Max: ${maxHeapSizeInMB}MB")
+                    
+                    // If memory usage is high, trigger cleanup
+                    if (availableHeapSizeInMB < maxHeapSizeInMB * 0.2) { // Less than 20% available
+                        cleanupResources()
+                    }
+                    
+                    lastMemoryLogTime = currentTime
+                }
+                if (!isFinishing) {
+                    handler.postDelayed(this, MEMORY_LOG_INTERVAL)
+                }
+            }
+        }, MEMORY_LOG_INTERVAL)
     }
 
     private fun cleanupResources() {
-        if (isCleaningUp) {
-            Log.d(TAG, "Cleanup already in progress, skipping")
-            return
+        if (!isCleaningUp) {
+            isCleaningUp = true
+            try {
+                // Clear view pager adapter
+                binding.viewPager.adapter = null
+                viewPagerAdapter = null
+                
+                // Trigger garbage collection
+                System.gc()
+                
+                // Recreate view pager adapter if needed
+                setupViewPager()
+            } finally {
+                isCleaningUp = false
+            }
         }
-
-        isCleaningUp = true
-        Log.d(TAG, "Starting cleanupResources")
-        try {
-            // Clean up MusicBroadcastManager singleton
-            try {
-                MusicBroadcastManager.cleanup()
-                Log.d(TAG, "MusicBroadcastManager cleanup completed")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error cleaning up MusicBroadcastManager", e)
-            }
-
-            // Clean up Music Player Bar Manager
-            try {
-                if (!isFinishing && ::musicPlayerBarManager.isInitialized) {
-                    musicPlayerBarManager.cleanup()
-                    Log.d(TAG, "Music Player Bar Manager cleanup completed")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error cleaning up Music Player Bar Manager", e)
-            }
-
-            // Cancel any pending operations
-            handler.removeCallbacksAndMessages(null)
-            Log.d(TAG, "Handler callbacks removed")
-
-            // Cancel coroutines and wait for completion
-            coroutineScope.cancel()
-            Log.d(TAG, "Coroutines cancelled")
-
-            // Clear ViewPager and adapter
-            binding.viewPager.adapter = null
-            viewPagerAdapter = null
-            Log.d(TAG, "ViewPager adapter cleared")
-
-            // Clear any Firebase listeners or operations
-            try {
-                // Get the database reference and disconnect
-                val databaseRef = FirebaseDatabase.getInstance().reference
-                databaseRef.keepSynced(false)
-                Log.d(TAG, "Firebase database sync disabled")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error clearing Firebase database listeners", e)
-            }
-
-            // Clear auth state listeners
-            try {
-                FirebaseAuth.getInstance().removeAuthStateListener { }
-                Log.d(TAG, "Firebase auth listeners cleared")
-            } catch (e: Exception) {
-                Log.e(TAG, "Error clearing Firebase auth listeners", e)
-            }
-
-            viewModel.cleanup()
-            Log.d(TAG, "ViewModel cleanup completed")
-
-            // Clear any cached data
-            binding.tabs.removeAllTabs()
-            Log.d(TAG, "Tabs cleared")
-
-            // Clear any bitmap caches or large objects
-            System.gc()
-            Log.d(TAG, "Garbage collection requested")
-
-            // Log final memory state
-            logMemoryUsage()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in cleanupResources", e)
-        } finally {
-            isCleaningUp = false
-        }
-        Log.d(TAG, "cleanupResources completed")
     }
 
     override fun onBackPressed() {

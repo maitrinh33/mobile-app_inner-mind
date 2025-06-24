@@ -31,10 +31,6 @@ class MusicPlayerBarManager(
             togglePlayPause()
         }
         
-        binding.buttonFavorite.setOnClickListener {
-            toggleFavorite()
-        }
-        
         // Make the song info area clickable to expand to full player
         binding.textTitle.setOnClickListener {
             expandToFullPlayer()
@@ -121,20 +117,7 @@ class MusicPlayerBarManager(
     private fun isCurrentlyPlaying(): Boolean {
         return isPlaying
     }
-    
-    private fun toggleFavorite() {
-        isFavorite = !isFavorite
-        updateFavoriteButton()
-        onFavoriteChanged?.invoke(isFavorite)
-    }
-    
-    private fun updateFavoriteButton() {
-        binding.buttonFavorite.setImageResource(
-            if (isFavorite) android.R.drawable.btn_star_big_on
-            else android.R.drawable.btn_star_big_off
-        )
-    }
-    
+
     private fun expandToFullPlayer() {
         // This could open a full-screen music player or expand the current bar
         // For now, we'll just show a toast
@@ -168,4 +151,6 @@ class MusicPlayerBarManager(
             android.util.Log.e("MusicPlayerBarManager", "Error cleaning up", e)
         }
     }
+
+    override fun getContext(): Context = context
 } 

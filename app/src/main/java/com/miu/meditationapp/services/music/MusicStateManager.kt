@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Handles music playback state persistence and restoration
@@ -20,6 +22,9 @@ class MusicStateManager(context: Context) {
         const val KEY_CURRENT_TITLE = "current_title"
         const val KEY_CURRENT_URI = "current_uri"
         const val KEY_CURRENT_DURATION = "current_duration"
+        
+        // Memory cache for frequently accessed values
+        @Volatile private var cachedState: MusicState? = null
     }
     
     data class MusicState(
@@ -31,7 +36,7 @@ class MusicStateManager(context: Context) {
         val isPlaying: Boolean
     )
     
-    fun saveState(
+    suspend fun saveState(
         songId: String,
         title: String,
         uri: Uri,
@@ -39,47 +44,51 @@ class MusicStateManager(context: Context) {
         position: Int,
         isPlaying: Boolean
     ) {
-        try {
-            prefs.edit().apply {
-                putString(KEY_CURRENT_SONG_ID, songId)
-                putString(KEY_CURRENT_TITLE, title)
-                putString(KEY_CURRENT_URI, uri.toString())
-                putString(KEY_CURRENT_DURATION, duration)
-                putInt(KEY_CURRENT_POSITION, position)
-                putBoolean(KEY_IS_PLAYING, isPlaying)
-            }.apply()
-        } catch (e: Exception) {
-            Log.e("MusicStateManager", "Error saving state", e)
+        // Update memory cache first
+        val newState = MusicState(songId, title, uri.toString(), duration, position, isPlaying)
+        cachedState = newState
+        
+        // Then save to disk asynchronously
+        withContext(Dispatchers.IO) {
+            try {
+                prefs.edit().apply {
+                    putString(KEY_CURRENT_SONG_ID, songId)
+                    putString(KEY_CURRENT_TITLE, title)
+                    putString(KEY_CURRENT_URI, uri.toString())
+                    putString(KEY_CURRENT_DURATION, duration)
+                    putInt(KEY_CURRENT_POSITION, position)
+                    putBoolean(KEY_IS_PLAYING, isPlaying)
+                }.commit() // Use commit() on background thread instead of apply()
+            } catch (e: Exception) {
+                Log.e("MusicStateManager", "Error saving state", e)
+            }
         }
     }
     
-    fun restoreState(): MusicState? {
+    fun getState(): MusicState? {
+        // Return cached state if available
+        cachedState?.let { return it }
+        
+        // Otherwise read from SharedPreferences
         return try {
-            val songId = prefs.getString(KEY_CURRENT_SONG_ID, "") ?: ""
-            if (songId.isNotEmpty()) {
-                MusicState(
-                    songId = songId,
-                    title = prefs.getString(KEY_CURRENT_TITLE, "") ?: "",
-                    uri = prefs.getString(KEY_CURRENT_URI, "") ?: "",
-                    duration = prefs.getString(KEY_CURRENT_DURATION, "") ?: "",
-                    position = prefs.getInt(KEY_CURRENT_POSITION, 0),
-                    isPlaying = prefs.getBoolean(KEY_IS_PLAYING, false)
-                )
-            } else {
-                null
+            val songId = prefs.getString(KEY_CURRENT_SONG_ID, null) ?: return null
+            val title = prefs.getString(KEY_CURRENT_TITLE, "") ?: ""
+            val uri = prefs.getString(KEY_CURRENT_URI, "") ?: ""
+            val duration = prefs.getString(KEY_CURRENT_DURATION, "") ?: ""
+            val position = prefs.getInt(KEY_CURRENT_POSITION, 0)
+            val isPlaying = prefs.getBoolean(KEY_IS_PLAYING, false)
+            
+            MusicState(songId, title, uri, duration, position, isPlaying).also {
+                cachedState = it
             }
         } catch (e: Exception) {
-            Log.e("MusicStateManager", "Error restoring state", e)
+            Log.e("MusicStateManager", "Error reading state", e)
             null
         }
     }
     
     fun clearState() {
+        cachedState = null
         prefs.edit().clear().apply()
-    }
-    
-    fun hasValidState(): Boolean {
-        val state = restoreState()
-        return state != null
     }
 } 

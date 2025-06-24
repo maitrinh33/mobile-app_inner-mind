@@ -56,10 +56,32 @@
             android:exported="true" />
 
         <receiver android:name=".helper.NotificationReceiver" />
+        
+        <!-- Music Service -->
         <service 
             android:name=".services.MusicServiceRefactored"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="com.miu.meditationapp.PLAY" />
+                <action android:name="com.miu.meditationapp.PAUSE" />
+                <action android:name="com.miu.meditationapp.STOP" />
+                <action android:name="com.miu.meditationapp.PLAY_SONG" />
+                <action android:name="com.miu.meditationapp.SEEK" />
+                <action android:name="com.miu.meditationapp.GET_STATE" />
+            </intent-filter>
+        </service>
+
+        <!-- Music Broadcast Receiver -->
+        <receiver
+            android:name=".services.music.MusicBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.miu.meditationapp.PLAY" />
+                <action android:name="com.miu.meditationapp.PAUSE" />
+                <action android:name="com.miu.meditationapp.STOP" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

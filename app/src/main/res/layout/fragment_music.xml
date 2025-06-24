@@ -7,135 +7,126 @@
     android:background="@drawable/music_background"
     >
 
-    <com.google.android.material.appbar.AppBarLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/transparent"
-        app:elevation="0dp">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- Header with song count -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="12dp">
-
-                <TextView
-                    android:id="@+id/textSongCount"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="0 songs"
-                    android:textSize="14sp"
-                    android:textColor="@android:color/black"
-                    tools:text="15 songs" />
-
-                <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fabAddSong"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="Add Song"
-                    app:fabSize="mini"
-                    app:srcCompat="@android:drawable/ic_input_add" />
-
-            </LinearLayout>
+            android:orientation="vertical">
 
             <!-- Search Bar -->
-            <com.google.android.material.card.MaterialCardView
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/searchView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="2dp">
+                android:layout_margin="16dp"
+                android:background="@drawable/rounded_edittext_register_login"
+                android:elevation="4dp"
+                app:iconifiedByDefault="false"
+                app:queryHint="Search songs..."
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <androidx.appcompat.widget.SearchView
-                    android:id="@+id/searchView"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:queryHint="Search songs, artists, albums..."
-                    app:iconifiedByDefault="false"
-                    app:queryBackground="@null" />
-
-            </com.google.android.material.card.MaterialCardView>
-
-        </LinearLayout>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <!-- Main Content -->
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <!-- Songs List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewSongs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:paddingBottom="80dp"
-                tools:listitem="@layout/item_song" />
-
-            <!-- Empty State -->
+            <!-- Admin Songs Section -->
             <LinearLayout
-                android:id="@+id/emptyStateLayout"
+                android:id="@+id/adminSongsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:gravity="center"
-                android:padding="32dp"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <ImageView
-                    android:layout_width="120dp"
-                    android:layout_height="120dp"
-                    android:src="@android:drawable/ic_media_play"
-                    android:alpha="0.3"
-                    android:contentDescription="No songs" />
+                android:visibility="gone">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="16dp"
-                    android:text="No songs yet"
+                    android:layout_marginBottom="8dp"
+                    android:text="Featured Songs"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewAdminSongs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:clipToPadding="false"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+            </LinearLayout>
+
+            <!-- User Songs Section -->
+            <LinearLayout
+                android:id="@+id/userSongsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="My Songs"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@android:color/black" />
 
                 <TextView
+                    android:id="@+id/textSongCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Add your first song to get started"
-                    android:textSize="14sp"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="8dp"
                     android:textColor="@android:color/darker_gray"
-                    android:gravity="center" />
+                    android:textSize="14sp" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnEmptyStateAddSong"
-                    android:layout_width="wrap_content"
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewUserSongs"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Add Song"
-                    app:icon="@android:drawable/ic_input_add" />
+                    android:clipToPadding="false"
+                    android:paddingBottom="80dp" />
 
             </LinearLayout>
 
-        </FrameLayout>
+            <!-- Empty State -->
+            <include
+                android:id="@+id/emptyStateLayout"
+                layout="@layout/empty_state_music"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>
+
+    <!-- Add Song FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAddSong"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="Add song"
+        android:src="@android:drawable/ic_input_add" />
+
+    <!-- Admin Upload FAB (only visible for admins) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdminUpload"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:contentDescription="Admin upload"
+        android:src="@android:drawable/ic_menu_upload"
+        android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 
