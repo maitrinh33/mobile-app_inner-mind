@@ -18,6 +18,7 @@ import com.miu.meditationapp.models.PostHistory
 import com.squareup.picasso.Picasso
 
 private lateinit var database: DatabaseReference
+private const val TAG = "RecyclerAdapter"
 
 class RecyclerAdapter(var context: Context, items: List<PostHistory>) :
     RecyclerView.Adapter<RecyclerAdapter.ViewHolder?>() {
@@ -61,9 +62,9 @@ class RecyclerAdapter(var context: Context, items: List<PostHistory>) :
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         try {
             val message = items[position]
-            holder.username.text = message.uid
             holder.postbody.text = message.postbody
             holder.posteddate.text = message.posteddate
+            holder.username.visibility = View.VISIBLE
 
             // Set background and text color based on message type
             if (getItemViewType(position) == 0) {
@@ -100,27 +101,38 @@ class RecyclerAdapter(var context: Context, items: List<PostHistory>) :
                 }
             }
 
-            // Load user profile image
+            // Load user profile image and username
             if (message.uid != null) {
                 database = FirebaseDatabase.getInstance().getReference("users")
                 database.child(message.uid).get().addOnSuccessListener {
                     if (it.exists()) {
-                        val imageUrl = it.child("profileImageUrl").value.toString()
-                        if (imageUrl.isNotEmpty()) {
+                        val username = it.child("username").value?.toString()
+                        holder.username.text = username ?: "Unknown User"
+                        holder.username.visibility = View.VISIBLE
+
+                        val imageUrl = it.child("profileImageUrl").value?.toString()
+                        if (!imageUrl.isNullOrEmpty()) {
                             Picasso.get()
                                 .load(imageUrl)
+                                .placeholder(R.drawable.onboarding_community)
                                 .error(R.drawable.onboarding_community)
                                 .into(holder.image)
                         } else {
                             holder.image.setImageResource(R.drawable.onboarding_community)
                         }
                     } else {
+                        holder.username.text = "Unknown User"
+                        holder.username.visibility = View.VISIBLE
                         holder.image.setImageResource(R.drawable.onboarding_community)
                     }
                 }.addOnFailureListener {
+                    holder.username.text = "Unknown User"
+                    holder.username.visibility = View.VISIBLE
                     holder.image.setImageResource(R.drawable.onboarding_community)
                 }
             } else {
+                holder.username.text = "Unknown User"
+                holder.username.visibility = View.VISIBLE
                 holder.image.setImageResource(R.drawable.onboarding_community)
             }
         } catch (e: Exception) {
@@ -134,9 +146,5 @@ class RecyclerAdapter(var context: Context, items: List<PostHistory>) :
 
     override fun getItemId(position: Int): Long {
         return position.toLong()
-    }
-
-    companion object {
-        private const val TAG = "RecyclerAdapter"
     }
 } 

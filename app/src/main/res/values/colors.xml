@@ -1,32 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="black">#FF444444</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="beige_100">#FFf7d8cc</color>
+
+    <!--    purple-->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF585377</color>
     <color name="purple_700">#FF33214E</color>
+
+    <!--    teal-->
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
-    <color name="black">#FF444444</color>
-    <color name="white">#FFFFFFFF</color>
-
-    <color name="beige_100">#FFf7d8cc</color>
 
     <!--    green-->
+    <color name="green">#0D6B2F</color>
     <color name="green_200">#FFC7E1DE</color>
+    <color name="green_300">#B9E786</color>
     <color name="green_400">#A4EB6B</color>
     <color name="green_500">#FF8AA771</color>
     <color name="green_505">#558AA771</color>
     <color name="green_700">#FF60794a</color>
     <color name="green_705">#99496E81</color>
     <color name="green_800">#FF404F49</color>
-    <color name="green">#0D6B2F</color>
-
 
     <!--    yellow-->
     <color name="yellow_200">#FFFFFADD</color>
     <color name="yellow_500">#FFFFEF95</color>
+
     <!--    gray-->
     <color name="gray_100">#FFf8faf8</color>
     <color name="gray_300">#FF808182</color>
+
     <!--    blue-->
     <color name="light_blue_600">#FF039BE5</color>
     <color name="light_blue_900">#FF01579B</color>
@@ -38,7 +43,7 @@
     <color name="orange_300">#C381D742</color>
     <color name="orange_500">#B9E786</color>
 
-    <!--Custom Colors-->
+    <!--custom Colors-->
     <color name="color_primary">#59801D</color>
     <color name="color_text">#4B1717</color>
     <color name="exercise_breath">#FFFF9F9E</color>
@@ -51,6 +56,7 @@
     <color name="custom_color_transparent">#80FFFFFF</color>
     <color name="custom_color_text_primary">#060906</color>
     <color name="custom_color_text_secondary">#464747</color>
+
     <color name="our_color">#F9A826</color>
     <color name="additional_color">#58B19F</color>
     <color name="transparent">#00000000</color>
