@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/home_background"
+    android:background="@drawable/music_background"
     tools:context=".fragments.HomeFragment">
 
     <com.airbnb.lottie.LottieAnimationView
@@ -67,12 +67,12 @@
                 android:layout_gravity="end"
                 android:layout_margin="8dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-                android:backgroundTint="@color/green_500"
+                android:backgroundTint="@color/green_700"
                 android:text="Set Reminder"
                 app:icon="@drawable/ic_reminder"
                 app:iconGravity="textEnd"
                 app:iconPadding="8dp"
-                app:iconTint="@color/white"
+                app:iconTint="@color/custom_color_background"
                 app:iconSize="24dp" />
 
             <com.google.android.material.card.MaterialCardView
@@ -89,18 +89,18 @@
                 android:layout_marginBottom="16dp">
 
                 <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+                    android:layout_width="375dp"
+                    android:layout_height="171dp"
                     android:orientation="vertical"
                     android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Start Meditating"
-                        android:textStyle="bold"
                         android:layout_marginBottom="8dp"
-                        android:textAppearance="?attr/textAppearanceHeadline6" />
+                        android:text="Start Meditating"
+                        android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="328dp"
@@ -113,10 +113,11 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/meditate_exercise"
                         android:layout_width="125dp"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="start"
+                        android:layout_height="50dp"
                         android:backgroundTint="@color/black"
+                        android:gravity="center_horizontal"
                         android:text="Start Now"
+                        android:textAlignment="center"
                         android:textAllCaps="false"
                         android:textAppearance="@style/TextAppearance.AppCompat.Small"
                         app:cornerRadius="10dp" />
@@ -139,7 +140,7 @@
                 android:focusable="true"
                 android:checkable="true"
                 app:cardCornerRadius="16dp"
-                android:backgroundTint="@color/green_500"
+                android:backgroundTint="@color/exercise_breath"
                 android:outlineAmbientShadowColor="@color/green_700"
                 android:layout_marginBottom="16dp">
 
@@ -168,11 +169,13 @@
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/breath_exercise"
                         android:layout_width="125dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="50dp"
                         android:layout_gravity="start"
                         android:backgroundTint="@color/black"
                         android:text="Start Now"
+                        android:textAlignment="center"
                         android:textAllCaps="false"
+                        android:gravity="center_horizontal"
                         android:textAppearance="@style/TextAppearance.AppCompat.Small"
                         app:cornerRadius="10dp" />
                 </LinearLayout>

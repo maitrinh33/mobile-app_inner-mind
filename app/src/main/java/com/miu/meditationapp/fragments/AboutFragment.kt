@@ -44,24 +44,21 @@ class AboutFragment : Fragment() {
 
         // Load user data
         viewModel.getFirstName()
+        viewModel.getProfilePictureField()
+
+        // Observe user data changes
         viewModel.liveFirstName.observe(viewLifecycleOwner) { firstName ->
             if (firstName.isNotEmpty()) {
                 binding.name.text = "Hi $firstName!"
             }
         }
 
-        viewModel.getProfilePictureField()
         viewModel.liveProfilePicture.observe(viewLifecycleOwner) { profileUrl ->
-            if (profileUrl.isNotEmpty()) {
-                try {
-                    Picasso.get()
-                        .load(profileUrl)
-                        .error(R.drawable.onboarding_community)
-                        .into(binding.avatar)
-                } catch (e: Exception) {
-                    Log.e("AboutFragment", "Error loading profile picture: ${e.message}")
-                    binding.avatar.setImageResource(R.drawable.onboarding_community)
-                }
+            if (!profileUrl.isNullOrEmpty()) {
+                Picasso.get()
+                    .load(profileUrl)
+                    .error(R.drawable.onboarding_community)
+                    .into(binding.avatar)
             }
         }
 
@@ -73,7 +70,7 @@ class AboutFragment : Fragment() {
                 auth.signOut()
                 val preferences = context?.getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)
                 preferences?.edit()?.remove("ISCOMPLETE")?.apply()
-                
+
                 val intent = Intent(context, LoginActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
