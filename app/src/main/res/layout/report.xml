@@ -23,15 +23,14 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="115dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:layout_weight="2"
         android:orientation="horizontal">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="80dp"
-            android:layout_marginRight="16dp"
+            android:layout_height="100dp"
+            android:layout_marginEnd="8dp"
             android:layout_weight="1"
             android:outlineSpotShadowColor="@color/transparent"
             app:cardCornerRadius="16dp"
@@ -39,7 +38,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="130dp"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="16dp">
 
@@ -64,14 +63,15 @@
                 android:layout_width="40dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|top"
-                android:layout_marginRight="5dp"
+                android:layout_marginEnd="8dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/trophy" />
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="80dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:outlineSpotShadowColor="@color/transparent"
             app:cardCornerRadius="16dp"
@@ -79,7 +79,7 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="130dp"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="16dp">
 
@@ -104,7 +104,7 @@
                 android:layout_width="40dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|top"
-                android:layout_marginRight="8dp"
+                android:layout_marginEnd="8dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/check" />
         </com.google.android.material.card.MaterialCardView>
@@ -113,22 +113,21 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:layout_weight="2">
+        android:layout_height="100dp"
+        android:orientation="horizontal">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="115dp"
+            android:layout_height="100dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
             android:outlineSpotShadowColor="@color/transparent"
             app:cardCornerRadius="16dp"
-            android:layout_weight="1"
-            android:layout_marginRight="16dp"
             tools:ignore="MissingConstraints">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="130dp"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="16dp">
 
@@ -142,7 +141,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="151dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/str_min_breathe"
                     android:textAppearance="?attr/textAppearanceBody2"
@@ -153,36 +152,37 @@
                 android:layout_width="40dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|top"
+                android:layout_marginEnd="8dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/trophy"
-                android:layout_marginRight="5dp"/>
+                android:src="@drawable/trophy" />
         </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
-            android:layout_height="95dp"
+            android:layout_height="100dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
             android:outlineSpotShadowColor="@color/transparent"
             app:cardCornerRadius="16dp"
-            android:layout_weight="1"
             tools:ignore="MissingConstraints">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="130dp"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:padding="16dp">
 
                 <TextView
+                    android:id="@+id/val_breathe_times"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="-"
-                    android:id="@+id/val_breathe_times"
-                    android:textStyle="bold"
+                    android:textAppearance="?attr/textAppearanceHeadline6"
                     android:textColor="@color/color_text"
-                    android:textAppearance="?attr/textAppearanceHeadline6" />
+                    android:textStyle="bold" />
 
                 <TextView
-                    android:layout_width="160dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/str_times_breathe"
                     android:textAppearance="?attr/textAppearanceBody2"
@@ -193,9 +193,9 @@
                 android:layout_width="40dp"
                 android:layout_height="60dp"
                 android:layout_gravity="end|top"
+                android:layout_marginEnd="8dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/check"
-                android:layout_marginRight="8dp"/>
+                android:src="@drawable/check" />
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
