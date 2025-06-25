@@ -52,10 +52,17 @@ class AboutViewModel : ViewModel() {
         database.child(uid).get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    val firstName = snapshot.child("firstname").value.toString()
-                    if (firstName.isNotEmpty()) {
+                    // First try to get firstname, if not available use username (for Google login)
+                    val firstName = snapshot.child("firstname").value?.toString()
+                    if (!firstName.isNullOrEmpty()) {
                         firstname = firstName
                         liveFirstName.value = firstname
+                    } else {
+                        val username = snapshot.child("username").value?.toString()
+                        if (!username.isNullOrEmpty()) {
+                            firstname = username
+                            liveFirstName.value = firstname
+                        }
                     }
                 } else {
                     Log.d("AboutViewModel", "User data not found")
@@ -78,7 +85,7 @@ class AboutViewModel : ViewModel() {
         database.child(uid).get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    lastname = snapshot.child("lastname").value.toString()
+                    lastname = snapshot.child("lastname").value?.toString() ?: ""
                 } else {
                     Log.d("AboutViewModel", "User data not found")
                 }
@@ -99,7 +106,7 @@ class AboutViewModel : ViewModel() {
         database.child(uid).get()
             .addOnSuccessListener { snapshot ->
                 if (snapshot.exists()) {
-                    email = snapshot.child("username").value.toString()
+                    email = snapshot.child("email").value?.toString() ?: ""
                 } else {
                     Log.d("AboutViewModel", "User data not found")
                 }

@@ -11,7 +11,7 @@ import java.util.*
 
 class AdminSongAdapter(
     private val onSongClick: (SongEntity) -> Unit,
-    private val onMoreOptionsClick: (SongEntity) -> Unit
+    private val onMoreOptionsClick: (SongEntity, View) -> Unit
 ) : RecyclerView.Adapter<AdminSongAdapter.SongViewHolder>() {
 
     var songs: List<SongEntity> = emptyList()
@@ -26,18 +26,18 @@ class AdminSongAdapter(
                 textDuration.text = song.duration
                 textArtist.text = song.artist
                 textPlayCount.text = "${song.playCount} plays"
-                
+
                 // Set loading state
                 loadingOverlay.visibility = if (loadingStates[song.id.toInt()] == true) View.VISIBLE else View.GONE
-                
+
                 // Click listeners
-                root.setOnClickListener { 
+                root.setOnClickListener {
                     if (loadingStates[song.id.toInt()] != true) {
                         setLoading(song.id.toInt(), true)
                         onSongClick(song)
                     }
                 }
-                buttonMore.setOnClickListener { onMoreOptionsClick(song) }
+                buttonMore.setOnClickListener { onMoreOptionsClick(song, buttonMore) }
             }
         }
     }
