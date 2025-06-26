@@ -12,10 +12,14 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 object DropboxHelper {
     // Note: This is a long-lived access token that doesn't expire
-    private const val ACCESS_TOKEN = "sl.u.AFzKjE1LWXUCtCt976t-Td6xMlzS8UEaj-HWBHnF4Imd6VFMgxQfci6Z5upMxGLVRgXAQ2aYL8rrKWaVw7msm4e3MF6nDa0YVVjOPEtQZKbgRDorhWnwGL9u1RDXlUSifTQkAPcBnqfQJ6OPdTSOiXZNHbb0mHnZzdW0UO1P7WsV5kEe-Npw-uDWmHe7zZe6ixqqD1FGRUgCsaclYcv9Cjh9v2oIjLq1lm91DWG-jn0NWQXML5O2AECWtCwlXFvP3eInXc3DTfR_7SPZNJ4o1Z9Dg8guUggpOqBPK8CDMDDcaKP1Fd1SXLbRre5CHhx3Qu0r7VdKm-SICRbSz95Vj4iqMdhDRkgASc7WsQPH4iX8aDy4Qat5f0aGx840LvM_3etxKVpkjPB30C5RgEIwCfXYcc3K3EyonkddNYjemldlrNACKlvbQ7HXOxbjrLWw0_0M4afUmfOtG2mMTPcHb-YMY8AXzAqiEdNHQlW_cj7basxT5eWWySVYAzRL0UxaU27WoPs_WK2glIF_tZJ-ziLNFSxtHg0GIcz4wHAWnrYAtt2lkQQUc-2P_1zaBAniQAVNg8UIDwEh62f4O0WCUpKZycyypyhmhBRx5aVUl0meOU4S5UlsTOn7I2-3LMHeysZ_9lkZPimVaUdMudH8RWQOLrnRZpSpzBFMDbUroNLxYM5gtX32EJ0VDKH-jhjgiLmtU4PYeKw8HjTwlE7JmfiSmUBi6nDfEn-z5o3WSDj4qeMaylScoRn-u6gseVi2d1njIWwZbMhE9TNw7fp7Wx3jHd5auz9cQxwC1BHiXhROm3FYuze61FdnVMtgD7OeTYHnNk1t5uFQZKlQQ4HafBubnl4brauP4fpE2w9XesfwPWKY3h71lDvtGln6p8_VhUy_XcLroWvfDi_vzdoa7dBVCixUixR1_7D076E7wh2LVnoC7Zugd2_RnXn_BZIUGW5nBBYcD-MnETmpjarSnuxzz7EX-0CZFwQxy2BPM1ZIblRjNoyJCZORN80cvjacnB4zNAXdqs_aOGmB76dwjz18MABOtbhgvOjI49jL_uJfK_gcUH3I0JXW9F3nbarCWCxc_Es-pRagWPOreQPcyKeMoRsoAE9tj15KebqMeMpgPH0mfQhlsKlDgLYaSD3rs4xHqWP7AUUYVbtZZHhz4PbEJt2sfKH5mpftpXaKBP7EvVnNXSu820vFDUyxl7DIwJsLf68tJbDJi5GXwTuFy3ydhq5LEFr13n97KlnSWo54I1l7PAteSzVJoMHgROTV3ycuVjn5hF9kpKxS9nUTMBAT1eFA2GpKSFNPuEFuDtAV-U_eQpYNXR1BjANffTsOXED4fqtPP-ZMzBsnJW7hpeAFO3sTkN39UbfRwPp9aOF1pgwPJh-yM4B1ekrOg8BClJcrWdxXltIp4ZMAKbe9irnxH1ZU_R4WuR32ZBK006lESPUzYG___GDji6iVrfJbYmSylNqrFU0mE5az7H-QW4om" 
+    private const val ACCESS_TOKEN =
+        "sl.u.AF1LxOWtRZ6NZ_OUFK9VI2V5_ppJhuD5PoFq9cTxXYtoD2zsslrpe7XEkVDN9jLBKUmkLIfRgic7ioDWqDFgDyXa7UkFHITX2yAqKBG0-vKxsdCInBlQIAsA3TcJ22CqnGOAiy5oSD2l967GGRhZHHnFVDOph3Q_3pwkSu-tPAlzEv6isPI1Zl1kuAeBMTJeMz55s1g166-naTOvUuwAdO-cPUbQ23zs6UETit9S6qHDRkEBy_3QBMAwrtsJGS_h3wB2q0bU3eQbNx1oRVN1PoS_xg7wwwCdF4BBE58dMqGwpOedbTSm9WOhPkYJJry4dstog_0mT6svJQphOCu15l95VSK_tWFXGqgHlqRRMv0vzGJponeUYDNaLkEqQU9ftmzojwYnEs2QBAR5kdV5R2FYn68Tw7VSXBVITloiwvB7iKIyUQdaOEVYlafZeEnP7LMNelxRQQR970GSB_xRq0y_R9HgjG-Bv3UZcAG-0GL2qJaqHMHnLL0Fd2o0M4QoqruOmXM_jVXIHWYp7nlHkE3rdm9E72Qk-BP-iGJZppKxBUbM9T1ZliOwrBuEx5U4LIrF5Ll1L9oNTkLDmfiiXHXw9Tsf9c5KlZbmMzNPkqepvXcUZNGYCI7wOgDM0D9GPz8d1PJVDWob7-82J5Ee4DeNDE15OdTBtK0EDqNuCBsDYaQ2eYBkbAVF4wA-bocGPGmY9chy0jMdvwWzocAJFwI3Y4J1QfgPSZgTuKn8QtZ2iYZI-QEbn-JsZvVjRUKTIVEeQCFWrJrnbqTiULcMtrz-cXPT843xNlZONcTnxvVDXLOXFyF7_oYP9r8I3j5hI9zfC9Lku8GkpfRjkZp03rW96cNARglz53CnDdJh85qQRNct34QTu0bYkoO04i9NzVYEgwAFympGSZgMjhK4E_MOjLkR4C3EmFY92jQ81O38AeMB4j1ItdCJDae6avjheacxpLfgWSNpT6TC0qEXbSdxatrVipXsdhgWQqyRMQFnfm4EcBcsaj3d_aU2FY2omhtbZ_19p8pO4v9FGjtVbpmxnhxqGyfqhOdxlz60bgW1iQ4zL2YSUzdpm4N6zYQG0UOaV5Czbnp-q-WJnRqikJUoP5u2g_PHa3saCyrf5DNpKKuvXr_sKNI50F3Z9FBOFDf2d13qqInbioLuNojin7yIylz24uuH0GTNZ0KWHJvY_LhJfHUsx8PyiMwQoICj0KX3b2x81GU-WN6iD0C91P46cVR8nsolt1UZhDtXv052qyV9wIrBzdBWVCQQ8MaBGktZRGTaIZ9ci6W79suGrAmlgZdiYKdkKp8-Z_11zpxnLas3bZ5TO6oZjdgNUzAn4TJ-sPlehijjhcI2g2zbzhKZUDV6PuGhX2RunD0MlmY59z6UJGrL8Dl88TIqXNmkrJAEZwBfMpZz70uf-EchzOydoRyFxdsYobVy4R2q_2xbOSPRX_Jr3OkXcu7-ptSC5AbFn4pKWoQnmpGFeV7mlBjG"
     private val config = DbxRequestConfig.newBuilder("meditation-app").build()
     private var client = DbxClientV2(config, ACCESS_TOKEN)
 
@@ -42,9 +46,8 @@ object DropboxHelper {
             // Create a copy of the input stream data first
             val byteArray = try {
                 inputStream.readBytes()
-            } catch (e: Exception) {
-                onError(e)
-                return
+            } finally {
+                try { inputStream.close() } catch (_: Exception) {}
             }
 
             thread {
@@ -119,6 +122,38 @@ object DropboxHelper {
                 Log.e("DropboxHelper", "Error getting streaming URL", e)
                 throw e
             }
+        }
+    }
+
+    suspend fun prefetchUrls(
+        songs: List<com.miu.meditationapp.databases.SongEntity>,
+        cache: MutableMap<String, Pair<String, Long>>,
+        cacheDuration: Long
+    ) = coroutineScope {
+        val adminSongs = songs.filter { it.isAdminSong }
+        val deferredUrls = adminSongs.map { song ->
+            async {
+                try {
+                    val needsUpdate = !cache.containsKey(song.uri) ||
+                        System.currentTimeMillis() - (cache[song.uri]?.second ?: 0) > cacheDuration
+
+                    if (needsUpdate) {
+                        val url = getStreamingUrl(song.uri)
+                        cache[song.uri] = Pair(url, System.currentTimeMillis())
+                        true
+                    } else {
+                        false
+                    }
+                } catch (e: Exception) {
+                    Log.e("DropboxHelper", "Error prefetching URL for song ${song.id}", e)
+                    false
+                }
+            }
+        }
+        try {
+            deferredUrls.awaitAll()
+        } catch (e: Exception) {
+            Log.e("DropboxHelper", "Error during URL prefetching", e)
         }
     }
 }
