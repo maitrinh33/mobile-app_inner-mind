@@ -27,7 +27,9 @@ import android.content.Context
 import android.os.Process
 import java.lang.Runtime
 import android.content.ComponentCallbacks2
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: HomeViewModel

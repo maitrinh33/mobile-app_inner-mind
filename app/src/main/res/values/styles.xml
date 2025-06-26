@@ -47,10 +47,10 @@
     <style name="CustomTextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <item name="boxStrokeColor">@android:color/darker_gray</item>
         <item name="boxStrokeWidth">1dp</item>
-        <item name="boxCornerRadiusTopStart">15dp</item>
-        <item name="boxCornerRadiusBottomStart">15dp</item>
-        <item name="boxCornerRadiusTopEnd">15dp</item>
-        <item name="boxCornerRadiusBottomEnd">15dp</item>
+        <item name="boxCornerRadiusTopStart">30dp</item>
+        <item name="boxCornerRadiusBottomStart">30dp</item>
+        <item name="boxCornerRadiusTopEnd">30dp</item>
+        <item name="boxCornerRadiusBottomEnd">30dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
         <item name="hintTextColor">@android:color/black</item>
         <item name="android:textColorHint">@android:color/black</item>

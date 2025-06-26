@@ -1,5 +1,6 @@
 package com.miu.meditationapp.services
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
@@ -14,11 +15,22 @@ import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
 
-class AdminSongService {
-    private val auth = FirebaseAuth.getInstance()
-    private val database = FirebaseDatabase.getInstance()
-    private val storage = FirebaseStorage.getInstance()
+@Singleton
+class AdminSongService @Inject constructor(
+    private val context: Context,
+    private val auth: FirebaseAuth,
+    private val database: FirebaseDatabase,
+    private val storage: FirebaseStorage
+) {
     private val adminSongsRef = database.getReference("admin_songs").apply {
         // Enable persistence for offline access
         keepSynced(true)
@@ -32,38 +44,22 @@ class AdminSongService {
         } catch (e: Exception) {
             Log.w("AdminSongService", "Firebase persistence already enabled")
         }
-
-        // Initialize admin users in Firebase if not exists
-        initializeAdminUsers()
-    }
-
-    private fun initializeAdminUsers() {
-        val adminUids = listOf(
-            "cTWZcSFUnfOXNf8yWKdsIlvSgPx2" // Your admin UID
-        )
-        
-        val adminsRef = database.getReference("admins")
-        for (uid in adminUids) {
-            adminsRef.child(uid).setValue(true)
-                .addOnFailureListener { e ->
-                    Log.e("AdminSongService", "Failed to initialize admin user: $uid", e)
-                }
-        }
     }
 
     // Check if current user is admin
-    fun isCurrentUserAdmin(): Boolean {
-        val currentUser = auth.currentUser
-        val adminUids = listOf(
-            "cTWZcSFUnfOXNf8yWKdsIlvSgPx2" // Your admin UID
-        )
-        val isAdmin = currentUser?.uid in adminUids
-        Log.d("AdminSongService", "Checking admin status for user ${currentUser?.uid}: $isAdmin")
-        return isAdmin
+    suspend fun isCurrentUserAdmin(): Boolean {
+        val currentUser = auth.currentUser ?: return false
+        val userRef = database.getReference("users").child(currentUser.uid).child("isAdmin")
+        return try {
+            val snapshot = userRef.get().await()
+            snapshot.exists() && snapshot.getValue(Boolean::class.java) == true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     // Verify database rules
-    fun verifyDatabaseRules() {
+    suspend fun verifyDatabaseRules() {
         // Test read access
         adminSongsRef.limitToFirst(1).get()
             .addOnSuccessListener {
@@ -76,14 +72,13 @@ class AdminSongService {
 
     // Upload song to both Dropbox and Firebase
     fun uploadAdminSong(
-        inputStream: InputStream,
+        uri: Uri,
         fileName: String,
         title: String,
         artist: String,
         album: String,
         duration: String,
         fileSize: Long,
-        onProgress: (Int) -> Unit,
         onSuccess: (SongEntity) -> Unit,
         onError: (Exception) -> Unit
     ) {
@@ -94,11 +89,14 @@ class AdminSongService {
                     throw SecurityException("Only admins can upload admin songs")
                 }
 
+                // Open InputStream right before upload
+                val inputStream = context.contentResolver.openInputStream(uri)
+                    ?: throw IllegalArgumentException("Could not open input stream from URI")
+
                 // Upload to Dropbox first
                 val dropboxPath = "/admin_songs/$fileName"
                 Log.d("AdminSongService", "Uploading to Dropbox path: $dropboxPath")
 
-                // Upload to Dropbox
                 suspendCoroutine<Unit> { continuation ->
                     DropboxHelper.uploadFile(
                         inputStream = inputStream,
@@ -109,7 +107,6 @@ class AdminSongService {
                 }
 
                 Log.d("AdminSongService", "Successfully uploaded to Dropbox, getting shared link")
-                
                 // Get shared link from Dropbox
                 val songUri = DropboxHelper.getSharedLink(dropboxPath)
                 Log.d("AdminSongService", "Got Dropbox shared link: $songUri")
@@ -133,8 +130,6 @@ class AdminSongService {
 
                     // Push to Firebase and get the key
                     val newSongRef = adminSongsRef.push()
-                    
-                    // Use await() for Firebase operation
                     newSongRef.setValue(songMap).await()
                     Log.d("AdminSongService", "Successfully saved to Firebase with key: ${newSongRef.key}")
 
@@ -176,11 +171,9 @@ class AdminSongService {
         songEntity.firebaseId?.let { firebaseId ->
             // Get the song data to find Dropbox path
             val songSnapshot = adminSongsRef.child(firebaseId).get().await()
-            val dropboxPath = songSnapshot.child("dropboxPath").getValue(String::class.java)
-            
+            // val dropboxPath = songSnapshot.child("dropboxPath").getValue(String::class.java) // Unused
             // Delete from Firebase first
             adminSongsRef.child(firebaseId).removeValue().await()
-            
             // Then try to delete from Dropbox if path exists
             // Note: We're keeping the file in Dropbox for now as other users might be using it
             // Consider implementing reference counting if needed
@@ -205,5 +198,33 @@ class AdminSongService {
 
     fun cleanup() {
         coroutineScope.cancel()
+    }
+
+    fun getAdminSongs(): Flow<List<SongEntity>> = callbackFlow {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val songs = snapshot.children.mapNotNull { child ->
+                    val map = child.value as? Map<*, *> ?: return@mapNotNull null
+                    SongEntity(
+                        title = map["title"] as? String ?: "",
+                        artist = map["artist"] as? String ?: "",
+                        album = map["album"] as? String ?: "",
+                        duration = map["duration"] as? String ?: "",
+                        uri = map["uri"] as? String ?: "",
+                        fileSize = (map["fileSize"] as? Long) ?: 0L,
+                        isAdminSong = true,
+                        firebaseId = child.key,
+                        userId = "admin",
+                        dateAdded = Date((map["dateAdded"] as? Long) ?: 0L)
+                    )
+                }
+                trySend(songs)
+            }
+            override fun onCancelled(error: DatabaseError) {
+                close(error.toException())
+            }
+        }
+        adminSongsRef.addValueEventListener(listener)
+        awaitClose { adminSongsRef.removeEventListener(listener) }
     }
 } 

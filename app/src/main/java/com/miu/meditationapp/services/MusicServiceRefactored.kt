@@ -51,6 +51,7 @@ class MusicServiceRefactored : Service() {
     companion object {
         const val ACTION_PLAY = "com.miu.meditationapp.PLAY"
         const val ACTION_PAUSE = "com.miu.meditationapp.PAUSE"
+        const val ACTION_RESUME = "com.miu.meditationapp.ACTION_RESUME"
         const val ACTION_STOP = "com.miu.meditationapp.STOP"
         const val ACTION_PLAY_SONG = "com.miu.meditationapp.PLAY_SONG"
         const val ACTION_SEEK = "com.miu.meditationapp.SEEK"
@@ -508,6 +509,12 @@ class MusicServiceRefactored : Service() {
         
         saveCurrentState(isPlaying)
         
+        try {
+            unregisterReceiver(broadcastReceiver)
+        } catch (e: Exception) {
+            Log.e("MusicService", "Error unregistering broadcast receiver", e)
+        }
+
         try {
             musicPlayer?.release()
             audioFocusManager?.abandonAudioFocus()
