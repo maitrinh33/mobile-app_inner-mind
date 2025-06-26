@@ -5,13 +5,37 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SongDao {
+    @Query("SELECT * FROM songs ORDER BY dateAdded DESC")
+    fun getAllSongs(): Flow<List<SongEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(song: SongEntity): Long
+    suspend fun insert(song: SongEntity)
+
+    @Delete
+    suspend fun delete(song: SongEntity)
+
+    @Query("UPDATE songs SET title = :newTitle WHERE id = :songId AND userId = :userId")
+    suspend fun updateTitle(songId: Int, userId: String, newTitle: String)
+
+    @Query("UPDATE songs SET isFavorite = :isFavorite WHERE id = :songId AND userId = :userId")
+    suspend fun updateFavorite(songId: Int, userId: String, isFavorite: Boolean)
+
+    @Query("UPDATE songs SET lastPlayed = :lastPlayed, playCount = playCount + 1 WHERE id = :songId AND userId = :userId")
+    suspend fun updatePlayStats(songId: Int, userId: String, lastPlayed: java.util.Date)
+
+    @Query("UPDATE songs SET lastPlayed = :lastPlayed, playCount = playCount + 1 WHERE id = :songId AND userId = :userId")
+    suspend fun incrementPlayCount(songId: Int, userId: String, lastPlayed: java.util.Date)
+
+    @Query("SELECT * FROM songs WHERE id = :songId")
+    suspend fun getSongById(songId: Int): SongEntity?
 
     @Query("SELECT * FROM songs WHERE userId = :userId ORDER BY dateAdded DESC")
-    fun getAllSongs(userId: String): Flow<List<SongEntity>>
+    fun getSongsByUser(userId: String): Flow<List<SongEntity>>
 
-    @Query("SELECT * FROM songs WHERE userId = :userId AND isFavorite = 1 ORDER BY dateAdded DESC")
+    @Query("SELECT * FROM songs WHERE isAdminSong = 1 ORDER BY dateAdded DESC")
+    fun getAdminSongs(): Flow<List<SongEntity>>
+
+    @Query("SELECT * FROM songs WHERE isFavorite = 1 AND userId = :userId ORDER BY dateAdded DESC")
     fun getFavoriteSongs(userId: String): Flow<List<SongEntity>>
 
     @Query("SELECT * FROM songs WHERE userId = :userId AND (title LIKE '%' || :query || '%' OR artist LIKE '%' || :query || '%') ORDER BY dateAdded DESC")
@@ -22,21 +46,6 @@ interface SongDao {
 
     @Query("SELECT * FROM songs WHERE userId = :userId ORDER BY lastPlayed DESC LIMIT 10")
     fun getRecentlyPlayedSongs(userId: String): Flow<List<SongEntity>>
-
-    @Update
-    suspend fun update(song: SongEntity)
-
-    @Query("UPDATE songs SET title = :newTitle WHERE id = :songId AND userId = :userId")
-    suspend fun updateTitle(songId: Int, userId: String, newTitle: String)
-
-    @Query("UPDATE songs SET isFavorite = :isFavorite WHERE id = :songId AND userId = :userId")
-    suspend fun updateFavorite(songId: Int, userId: String, isFavorite: Boolean)
-
-    @Query("UPDATE songs SET playCount = playCount + 1, lastPlayed = :lastPlayed WHERE id = :songId AND userId = :userId")
-    suspend fun incrementPlayCount(songId: Int, userId: String, lastPlayed: java.util.Date)
-
-    @Delete
-    suspend fun delete(song: SongEntity)
 
     @Query("DELETE FROM songs WHERE id = :songId AND userId = :userId")
     suspend fun deleteById(songId: Int, userId: String)
@@ -49,9 +58,6 @@ interface SongDao {
 
     @Query("SELECT COUNT(*) FROM songs WHERE userId = :userId AND isFavorite = 1")
     suspend fun getFavoriteCount(userId: String): Int
-
-    @Query("SELECT * FROM songs WHERE id = :songId AND userId = :userId")
-    suspend fun getSongById(songId: Int, userId: String): SongEntity?
 
     @Query("SELECT * FROM songs WHERE uri = :uri AND userId = :userId")
     suspend fun getSongByUri(uri: String, userId: String): SongEntity?

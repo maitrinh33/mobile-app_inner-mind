@@ -17,7 +17,7 @@ class AdminSongAdapter(
     var songs: List<SongEntity> = emptyList()
         private set
 
-    private val loadingStates = mutableMapOf<Int, Boolean>()
+    private var loadingSongId: Int? = null
 
     inner class SongViewHolder(val binding: ItemAdminSongBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: SongEntity) {
@@ -28,12 +28,12 @@ class AdminSongAdapter(
                 textPlayCount.text = "${song.playCount} plays"
 
                 // Set loading state
-                loadingOverlay.visibility = if (loadingStates[song.id.toInt()] == true) View.VISIBLE else View.GONE
+                loadingOverlay.visibility = if (song.id.toInt() == loadingSongId) View.VISIBLE else View.GONE
 
                 // Click listeners
                 root.setOnClickListener {
-                    if (loadingStates[song.id.toInt()] != true) {
-                        setLoading(song.id.toInt(), true)
+                    if (loadingSongId != song.id.toInt()) {
+                        setOnlyLoading(song.id.toInt())
                         onSongClick(song)
                     }
                 }
@@ -60,16 +60,13 @@ class AdminSongAdapter(
         notifyDataSetChanged()
     }
 
-    fun setLoading(songId: Int, isLoading: Boolean) {
-        loadingStates[songId] = isLoading
-        val position = songs.indexOfFirst { it.id.toInt() == songId }
-        if (position != -1) {
-            notifyItemChanged(position)
-        }
+    fun setOnlyLoading(songId: Int) {
+        loadingSongId = songId
+        notifyDataSetChanged()
     }
 
     fun clearLoadingStates() {
-        loadingStates.clear()
+        loadingSongId = null
         notifyDataSetChanged()
     }
 } 
