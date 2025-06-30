@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import java.util.Date
 
-@Database(entities = [SongEntity::class], version = 3)
+@Database(entities = [SongEntity::class], version = 4)
 @TypeConverters(Converters::class)
 abstract class MusicDatabase : RoomDatabase() {
     abstract fun songDao(): SongDao

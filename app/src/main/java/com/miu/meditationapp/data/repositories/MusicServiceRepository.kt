@@ -11,10 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 @Singleton
 class MusicServiceRepository @Inject constructor(
-    private val context: Context
+    private val context: Context,
+    private val musicRepository: MusicRepository
 ) {
     private var musicService: MusicServiceRefactored? = null
     private val _isServiceBound = MutableStateFlow(false)
@@ -47,14 +51,18 @@ class MusicServiceRepository @Inject constructor(
     }
 
     fun playSong(song: SongEntity) {
-        val intent = Intent(context, MusicServiceRefactored::class.java).apply {
-            action = MusicServiceRefactored.ACTION_PLAY_SONG
-            putExtra("songId", song.id.toString())
-            putExtra("title", song.title)
-            putExtra("uri", song.uri)
-            putExtra("duration", song.duration)
+        CoroutineScope(Dispatchers.IO).launch {
+            musicRepository.playSong(song) { songToPlay ->
+                val intent = Intent(context, MusicServiceRefactored::class.java).apply {
+                    action = MusicServiceRefactored.ACTION_PLAY_SONG
+                    putExtra("songId", songToPlay.id.toString())
+                    putExtra("title", songToPlay.title)
+                    putExtra("uri", songToPlay.localPath ?: songToPlay.uri)
+                    putExtra("duration", songToPlay.duration)
+                }
+                context.startService(intent)
+            }
         }
-        context.startService(intent)
     }
 
     fun pauseSong() {

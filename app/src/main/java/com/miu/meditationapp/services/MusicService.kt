@@ -13,7 +13,6 @@ import android.os.IBinder
 import android.os.Looper
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
-import android.widget.Toast
 import com.miu.meditationapp.services.music.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +85,7 @@ class MusicServiceRefactored : Service() {
                         }
                     }
                     
-                    handler.postDelayed(this, 2000) // Reduced frequency from 1s to 2s
+                    handler.postDelayed(this, 1000)
                 } else {
                     handler.removeCallbacks(this)
                 }

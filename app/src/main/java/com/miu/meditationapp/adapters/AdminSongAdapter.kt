@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class AdminSongAdapter(
+    private val currentUserId: String,
     private val onSongClick: (SongEntity) -> Unit,
     private val onMoreOptionsClick: (SongEntity, View) -> Unit
 ) : RecyclerView.Adapter<AdminSongAdapter.SongViewHolder>() {
@@ -18,17 +19,18 @@ class AdminSongAdapter(
         private set
 
     private var loadingSongId: Int? = null
+    private var currentPlayingSongId: Int? = null
 
     inner class SongViewHolder(val binding: ItemAdminSongBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: SongEntity) {
             binding.apply {
                 textTitle.text = song.title
-                textDuration.text = song.duration
+                textDuration.text = formatDuration(song.duration)
                 textArtist.text = song.artist
                 textPlayCount.text = "${song.playCount} plays"
 
-                // Set loading state
-                loadingOverlay.visibility = if (song.id.toInt() == loadingSongId) View.VISIBLE else View.GONE
+                // Set loading state: only show if this is the loading song and not the currently playing song
+                loadingOverlay.visibility = if (song.id.toInt() == loadingSongId && song.id.toInt() != currentPlayingSongId) View.VISIBLE else View.GONE
 
                 // Click listeners
                 root.setOnClickListener {
@@ -37,7 +39,9 @@ class AdminSongAdapter(
                         onSongClick(song)
                     }
                 }
-                buttonMore.setOnClickListener { onMoreOptionsClick(song, buttonMore) }
+                moreOptionsButton.setOnClickListener { onMoreOptionsClick(song, moreOptionsButton) }
+
+                // Logic to determine which menu to show will be in the fragment/activity
             }
         }
     }
@@ -65,8 +69,31 @@ class AdminSongAdapter(
         notifyDataSetChanged()
     }
 
+    fun stopLoading() {
+        if (loadingSongId != null) {
+            loadingSongId = null
+            notifyDataSetChanged()
+        }
+    }
+
     fun clearLoadingStates() {
         loadingSongId = null
         notifyDataSetChanged()
+    }
+
+    fun setCurrentPlayingSongId(songId: Int?) {
+        currentPlayingSongId = songId
+        notifyDataSetChanged()
+    }
+
+    private fun formatDuration(duration: String): String {
+        return try {
+            val millis = duration.toLong()
+            val minutes = (millis / 1000) / 60
+            val seconds = (millis / 1000) % 60
+            String.format("%d:%02d", minutes, seconds)
+        } catch (e: NumberFormatException) {
+            "N/A"
+        }
     }
 } 

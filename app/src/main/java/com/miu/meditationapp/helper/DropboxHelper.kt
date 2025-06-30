@@ -15,11 +15,13 @@ import java.net.URL
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import java.io.File
+import java.io.FileOutputStream
 
 object DropboxHelper {
     // Note: This is a long-lived access token that doesn't expire
     private const val ACCESS_TOKEN =
-        "sl.u.AF1LxOWtRZ6NZ_OUFK9VI2V5_ppJhuD5PoFq9cTxXYtoD2zsslrpe7XEkVDN9jLBKUmkLIfRgic7ioDWqDFgDyXa7UkFHITX2yAqKBG0-vKxsdCInBlQIAsA3TcJ22CqnGOAiy5oSD2l967GGRhZHHnFVDOph3Q_3pwkSu-tPAlzEv6isPI1Zl1kuAeBMTJeMz55s1g166-naTOvUuwAdO-cPUbQ23zs6UETit9S6qHDRkEBy_3QBMAwrtsJGS_h3wB2q0bU3eQbNx1oRVN1PoS_xg7wwwCdF4BBE58dMqGwpOedbTSm9WOhPkYJJry4dstog_0mT6svJQphOCu15l95VSK_tWFXGqgHlqRRMv0vzGJponeUYDNaLkEqQU9ftmzojwYnEs2QBAR5kdV5R2FYn68Tw7VSXBVITloiwvB7iKIyUQdaOEVYlafZeEnP7LMNelxRQQR970GSB_xRq0y_R9HgjG-Bv3UZcAG-0GL2qJaqHMHnLL0Fd2o0M4QoqruOmXM_jVXIHWYp7nlHkE3rdm9E72Qk-BP-iGJZppKxBUbM9T1ZliOwrBuEx5U4LIrF5Ll1L9oNTkLDmfiiXHXw9Tsf9c5KlZbmMzNPkqepvXcUZNGYCI7wOgDM0D9GPz8d1PJVDWob7-82J5Ee4DeNDE15OdTBtK0EDqNuCBsDYaQ2eYBkbAVF4wA-bocGPGmY9chy0jMdvwWzocAJFwI3Y4J1QfgPSZgTuKn8QtZ2iYZI-QEbn-JsZvVjRUKTIVEeQCFWrJrnbqTiULcMtrz-cXPT843xNlZONcTnxvVDXLOXFyF7_oYP9r8I3j5hI9zfC9Lku8GkpfRjkZp03rW96cNARglz53CnDdJh85qQRNct34QTu0bYkoO04i9NzVYEgwAFympGSZgMjhK4E_MOjLkR4C3EmFY92jQ81O38AeMB4j1ItdCJDae6avjheacxpLfgWSNpT6TC0qEXbSdxatrVipXsdhgWQqyRMQFnfm4EcBcsaj3d_aU2FY2omhtbZ_19p8pO4v9FGjtVbpmxnhxqGyfqhOdxlz60bgW1iQ4zL2YSUzdpm4N6zYQG0UOaV5Czbnp-q-WJnRqikJUoP5u2g_PHa3saCyrf5DNpKKuvXr_sKNI50F3Z9FBOFDf2d13qqInbioLuNojin7yIylz24uuH0GTNZ0KWHJvY_LhJfHUsx8PyiMwQoICj0KX3b2x81GU-WN6iD0C91P46cVR8nsolt1UZhDtXv052qyV9wIrBzdBWVCQQ8MaBGktZRGTaIZ9ci6W79suGrAmlgZdiYKdkKp8-Z_11zpxnLas3bZ5TO6oZjdgNUzAn4TJ-sPlehijjhcI2g2zbzhKZUDV6PuGhX2RunD0MlmY59z6UJGrL8Dl88TIqXNmkrJAEZwBfMpZz70uf-EchzOydoRyFxdsYobVy4R2q_2xbOSPRX_Jr3OkXcu7-ptSC5AbFn4pKWoQnmpGFeV7mlBjG"
+"sl.u.AF1AHdfAbG5ebjubAppKc8I5qlAEvhA8L9c4LVbHmCaoH1hNZhlWox6dl-Kc9dCMjATC-U0yyL3Otm50gfJEfpFmm7p1kflxO362mZOD2rjfGEH7Sh6Wkzh4osWF-_94zOCa-KzvIjFogc_xdgeLkT8IO1sT0bZBpYZcOzhY8XRTS951ZYEnqc-293jd4wxEsgcc2sHPLoUSk4qhgIfXf7JdG7kVYxgLbiEqPaVjjzRoMpf78_vtSpU1TfWRgQ7ydFydK1RYvAhOrIPi1jt4ELV5ztE1wDkenroLTvGcaFqTkR0GoqfLdjf5nLVfT6cip__8JxB7ZLppyYHxeXcaZEoRlb7Csy4EZNfPJt7X3mkc7DFGOhqg6_DxJ645qgC1DItJVsGLTluA7U6LOfLcbQZnDFsmoVbkZty2fNyCGU0aRP0tIIm6iYJTeYU2NOSrjkezi0nn2PtQXDkMlFDZEex-Jys-Kg6qCcz-7SaY7sfn6eAcxbBpFl6ecG2E5HhUEyvk0EvV5pSpeL7pdyylBQIGQvvB3CyvgUiBYEWgjiCFW3lgkDXRvP76FU1gKFmyUWqr1TTFjD1e5Vq9IKLkPrsNRdfhpwtKVYOwjCXTCXewPiezrP2mK86hNKwKLYQ1xxQOSaH91SReeYQmxloIXDowv6XoBixskkmKnlASAB3jPEo-WpiVDIRDuT1D4hEKFfyPndT-LGavZ1Gy0mMd6ZXMAtApUAfXz5zi3BESs2Ch9ZVl-K44sDaMpQhsyVZdDWWkdW4GmtQDBjkAQBMso3qCOwRXa7Jte12iX8sKpINx0PMeU3usTZRztv_gTNQ6nqtdZGpBcpBQP0R5_yDvHYev-VR3wQx59LGMvMjIvJWhkyeF0nSixHMnuR5CtXySn9iY6yJGaN3_DUYJsEeLeZvYq7FkoFqjDjRerrrxnWCXgt4z-Wf7UKx57jpjdp_iA0uT9IWOHRZuavvfJoJzrFLxyK3CIPbgx-fSy17MZ25VSOoCNkajj6nT7EH9IhgNzFUm1Mn8kJXaOLGojSli3CYGV2ulqjVXv7CxPyT6zVxS8rY1HmR79BZBipJBKDT9lLTstrtXYX3QRL5CPC3f-BJMhYLdIhmMcy9WmDc-7989gLJkrm3BxE9zuDayatEuRzl_SKnNwJHms1N7w1YQDJdeuuOBssghJuoBWi9Rwvp-g8-mxweyqaHenxtCqE2FclYUIEMOVSCk9JyihSKM4Esk1Z1nBOhRfSVc42PB4UtTWgp0_0nkuZMTAjZ4fOL7M7cfDg6UGaTVZC9H1t8blOe975223FOWQxc1C7kqmYvx33nKSPVdlqlFabGzZXg2T1AqR0U7i262vFysp3L8_DOQKjqhsB2_ADP4oeo_duJBEkxuQEofuOGDN8yK612CrwGxfNrzvPWgLsq2btASruKkM__iaAYpYANcW_m7RtF7HJIRj5A2pR7Q1nvKMMpQ8Vm2uEU2R11qeP6fBAenOMi2"
     private val config = DbxRequestConfig.newBuilder("meditation-app").build()
     private var client = DbxClientV2(config, ACCESS_TOKEN)
 
@@ -154,6 +156,26 @@ object DropboxHelper {
             deferredUrls.awaitAll()
         } catch (e: Exception) {
             Log.e("DropboxHelper", "Error during URL prefetching", e)
+        }
+    }
+
+    suspend fun downloadFile(dropboxPath: String, destFile: File) {
+        withContext(Dispatchers.IO) {
+            try {
+                DropboxHelper.refreshClientIfNeeded()
+                client.files().download(dropboxPath).inputStream.use { input ->
+                    FileOutputStream(destFile).use { output ->
+                        val buffer = ByteArray(4096)
+                        var bytesRead: Int
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("DropboxHelper", "Error downloading file", e)
+                throw e
+            }
         }
     }
 }

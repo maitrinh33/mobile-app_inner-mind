@@ -28,9 +28,6 @@ class UploadManager(
             try {
                 viewModel.uploadAdminSongFromUri(
                     uri = uri,
-                    onProgress = { progress: Int ->
-                        dialog.setMessage("Uploading: $progress%")
-                    },
                     onSuccess = { song: SongEntity ->
                         dialog.dismiss()
                         DialogHelper.showError(context, "Admin song added: ${song.title}")

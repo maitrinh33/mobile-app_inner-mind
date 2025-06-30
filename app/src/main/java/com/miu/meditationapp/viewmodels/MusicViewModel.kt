@@ -33,6 +33,11 @@ import androidx.lifecycle.ViewModel
 import com.miu.meditationapp.data.repositories.MusicRepository
 import com.miu.meditationapp.data.repositories.MusicServiceRepository
 
+data class PlaybackState(
+    val isPlaying: Boolean = false,
+    val songId: Int? = null
+)
+
 @HiltViewModel
 class MusicViewModel @Inject constructor(
     private val repository: MusicRepository,
@@ -85,6 +90,9 @@ class MusicViewModel @Inject constructor(
     val currentPlayingSong: StateFlow<SongEntity?> = repository.currentPlayingSong
     val playbackError: StateFlow<Pair<Int, String>?> = repository.playbackError
 
+    private val _playbackState = MutableStateFlow(PlaybackState())
+    val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
+
     fun addSong(song: SongEntity) = viewModelScope.launch {
         try { repository.addSong(song) } catch (e: Exception) { _databaseError.value = e }
     }
@@ -110,16 +118,30 @@ class MusicViewModel @Inject constructor(
     suspend fun getSongByUri(uri: String): SongEntity? = repository.getSongByUri(uri)
     fun uploadAdminSongFromUri(
         uri: Uri,
-        onProgress: (Int) -> Unit,
         onSuccess: (SongEntity) -> Unit,
         onError: (Exception) -> Unit
     ) = viewModelScope.launch {
-        repository.uploadAdminSongFromUri(uri, onProgress, onSuccess, onError)
+        repository.uploadAdminSongFromUri(uri, onSuccess, onError)
     }
-    fun playSong(song: SongEntity) = musicServiceRepository.playSong(song)
-    fun pauseSong() = musicServiceRepository.pauseSong()
-    fun resumeSong() = musicServiceRepository.resumeSong()
-    fun stopSong() = musicServiceRepository.stopSong()
+    fun playSong(song: SongEntity) {
+        viewModelScope.launch {
+            stopSong()
+            musicServiceRepository.playSong(song)
+            _playbackState.value = PlaybackState(isPlaying = true, songId = song.id)
+        }
+    }
+    fun pauseSong() {
+        musicServiceRepository.pauseSong()
+        _playbackState.value = PlaybackState(isPlaying = false, songId = _playbackState.value.songId)
+    }
+    fun resumeSong() {
+        musicServiceRepository.resumeSong()
+        _playbackState.value = PlaybackState(isPlaying = true, songId = _playbackState.value.songId)
+    }
+    fun stopSong() {
+        musicServiceRepository.stopSong()
+        _playbackState.value = PlaybackState(isPlaying = false, songId = null)
+    }
     fun prefetchAdminSongUrls(songs: List<SongEntity>) = viewModelScope.launch { repository.prefetchAdminSongUrls(songs) }
     fun clearPlaybackError() { repository.clearPlaybackError() }
     override fun onCleared() { super.onCleared() }

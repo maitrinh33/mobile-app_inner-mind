@@ -1,61 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/musicPlayerBar"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="12dp"
-    android:background="@android:color/white"
-    android:elevation="4dp"
-    android:visibility="gone">
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="8dp"
+    android:clickable="true"
+    android:focusable="true"
+    android:visibility="gone"
+    tools:visibility="visible">
 
-    <!-- Song Info -->
-    <LinearLayout
-        android:layout_width="0dp"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginEnd="12dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:background="?android:attr/selectableItemBackground">
+        android:padding="12dp">
 
-        <TextView
-            android:id="@+id/textTitle"
-            android:layout_width="match_parent"
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imageAlbumArt"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/default_song"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:contentDescription="Album Art" />
+
+        <LinearLayout
+            android:id="@+id/songInfoContainer"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Song Title"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:layout_marginBottom="2dp" />
+            android:orientation="vertical"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            app:layout_constraintStart_toEndOf="@id/imageAlbumArt"
+            app:layout_constraintEnd_toStartOf="@+id/buttonPlayPause"
+            app:layout_constraintTop_toTopOf="@id/imageAlbumArt"
+            app:layout_constraintBottom_toBottomOf="@id/imageAlbumArt">
 
-        <TextView
-            android:id="@+id/textCurrentTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0:00 / 0:00"
-            android:textSize="11sp"
-            android:textColor="@android:color/darker_gray" />
+            <TextView
+                android:id="@+id/textTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Song Title"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end" />
 
-    </LinearLayout>
+            <TextView
+                android:id="@+id/textArtist"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Artist Name"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@android:color/darker_gray" />
 
-    <!-- Controls -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/buttonPlayPause"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:background="@android:color/transparent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_media_play"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/imageAlbumArt"
+            app:layout_constraintBottom_toBottomOf="@id/imageAlbumArt"
             android:contentDescription="Play/Pause" />
 
-    </LinearLayout>
+        <TextView
+            android:id="@+id/textStartTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="0:00"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imageAlbumArt"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
-</LinearLayout> 
+        <TextView
+            android:id="@+id/textEndTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="0:00"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/imageAlbumArt"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/songProgressBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:valueFrom="0.0"
+            android:valueTo="100.0"
+            app:trackHeight="2dp"
+            android:stepSize="0.0"
+            app:haloRadius="16dp"
+            app:thumbRadius="6dp"
+            app:trackColorActive="@color/green_200"
+            app:trackColorInactive="#CCCCCC"
+            app:layout_constraintStart_toEndOf="@id/textStartTime"
+            app:layout_constraintEnd_toStartOf="@id/textEndTime"
+            app:layout_constraintTop_toBottomOf="@id/imageAlbumArt"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginTop="8dp"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView> 
