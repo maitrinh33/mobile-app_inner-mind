@@ -10,6 +10,7 @@ import com.miu.meditationapp.adapters.ModernSongAdapter
 import com.miu.meditationapp.databases.SongEntity
 import com.miu.meditationapp.databinding.FragmentMusicBinding
 import com.miu.meditationapp.viewmodels.MusicViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 class RecyclerViewManager(
     private val context: Context,
@@ -18,44 +19,23 @@ class RecyclerViewManager(
 ) {
     private lateinit var userSongAdapter: ModernSongAdapter
     private lateinit var adminSongAdapter: AdminSongAdapter
+    private val auth = FirebaseAuth.getInstance()
 
     fun setupRecyclerViews(
         onSongClick: (SongEntity) -> Unit,
-        onUserOptionsClick: (SongEntity, android.view.View) -> Unit,
-        onAdminOptionsClick: (SongEntity, android.view.View) -> Unit,
+        onMoreOptionsClick: (SongEntity, android.view.View) -> Unit,
         onSwipeToDelete: (SongEntity) -> Unit,
         onSwipeToEdit: (SongEntity) -> Unit
     ) {
-        setupUserSongsRecyclerView(onSongClick, onUserOptionsClick, onSwipeToDelete, onSwipeToEdit)
-        setupAdminSongsRecyclerView(onSongClick, onAdminOptionsClick)
-    }
-
-    private fun setupUserSongsRecyclerView(
-        onSongClick: (SongEntity) -> Unit,
-        onOptionsClick: (SongEntity, android.view.View) -> Unit,
-        onSwipeToDelete: (SongEntity) -> Unit,
-        onSwipeToEdit: (SongEntity) -> Unit
-    ) {
-        userSongAdapter = ModernSongAdapter(
-            onSongClick = onSongClick,
-            onMoreOptionsClick = onOptionsClick
-        )
+        val currentUserId = auth.currentUser?.uid ?: ""
+        userSongAdapter = ModernSongAdapter(currentUserId, onSongClick, onMoreOptionsClick)
+        adminSongAdapter = AdminSongAdapter(currentUserId, onSongClick, onMoreOptionsClick)
 
         binding.recyclerViewUserSongs.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = userSongAdapter
             setupSwipeHandler(onSwipeToDelete, onSwipeToEdit)
         }
-    }
-
-    private fun setupAdminSongsRecyclerView(
-        onSongClick: (SongEntity) -> Unit,
-        onOptionsClick: (SongEntity, android.view.View) -> Unit
-    ) {
-        adminSongAdapter = AdminSongAdapter(
-            onSongClick = onSongClick,
-            onMoreOptionsClick = onOptionsClick
-        )
 
         binding.recyclerViewAdminSongs.apply {
             layoutManager = GridLayoutManager(context, 2)
@@ -99,5 +79,13 @@ class RecyclerViewManager(
 
     fun setOnlyLoadingState(songId: Int) {
         adminSongAdapter.setOnlyLoading(songId)
+    }
+
+    fun stopLoading() {
+        adminSongAdapter.stopLoading()
+    }
+
+    fun setCurrentPlayingAdminSong(songId: Int?) {
+        adminSongAdapter.setCurrentPlayingSongId(songId)
     }
 } 

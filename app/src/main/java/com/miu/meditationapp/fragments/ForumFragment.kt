@@ -14,7 +14,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.miu.meditationapp.activities.LoginAddUser
 import com.miu.meditationapp.adapters.RecyclerAdapter
 import com.miu.meditationapp.models.PostHistory
 import com.miu.meditationapp.databinding.FragmentForumBinding
@@ -29,6 +28,10 @@ class ForumFragment : Fragment() {
     private var adapter: RecyclerAdapter? = null
     var items: MutableList<PostHistory> = ArrayList()
     private lateinit var auth: FirebaseAuth
+
+    companion object {
+        private const val TAG = "ForumFragment"
+    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreateView(
@@ -122,7 +125,7 @@ class ForumFragment : Fragment() {
 
         ref.setValue(post)
             .addOnSuccessListener {
-                Log.d(LoginAddUser.TAG, "Successfully saved the post to Firebase Database")
+                Log.d(TAG, "Successfully saved the post to Firebase Database")
                 binding.edittextChat.text.clear()
                 // Scroll to the latest message after sending
                 binding.recyclerV?.post {
@@ -132,7 +135,7 @@ class ForumFragment : Fragment() {
                 }
             }
             .addOnFailureListener {
-                Log.d(LoginAddUser.TAG, "Failed to set value to database: ${it.message}")
+                Log.d(TAG, "Failed to set value to database: ${it.message}")
                 Toast.makeText(context, "Failed to send message: ${it.message}", Toast.LENGTH_SHORT).show()
             }
     }

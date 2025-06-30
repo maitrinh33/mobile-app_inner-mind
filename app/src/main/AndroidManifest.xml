@@ -23,9 +23,6 @@
         android:theme="@style/Theme.MeditationApp"
         android:enableOnBackInvokedCallback="true">
         <activity
-            android:name=".activities.LoginAddUser"
-            android:exported="true" />
-        <activity
             android:name=".activities.LoginForgotPassword"
             android:exported="true" />
         <activity
