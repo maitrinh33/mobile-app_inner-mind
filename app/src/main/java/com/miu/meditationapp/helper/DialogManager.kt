@@ -1,8 +1,10 @@
 package com.miu.meditationapp.helper
 
 import android.content.Context
+import android.content.Intent
 import android.view.View
 import androidx.lifecycle.LifecycleCoroutineScope
+import com.google.firebase.auth.FirebaseAuth
 import com.miu.meditationapp.databases.SongEntity
 import com.miu.meditationapp.viewmodels.MusicViewModel
 import kotlinx.coroutines.launch
@@ -15,35 +17,25 @@ class DialogManager(
     private val context: Context,
     private val viewModel: MusicViewModel,
     private val lifecycleScope: LifecycleCoroutineScope,
-    private val rootView: View
+    private val rootView: View,
+    private val auth: FirebaseAuth
 ) {
     /**
      * Shows options menu for user songs and coordinates actions with business logic
      */
-    fun showUserSongOptionsMenu(song: SongEntity, anchor: View) {
-        MenuHelper.showUserSongOptionsMenu(
-            context = context,
-            song = song,
-            anchor = anchor,
-            onEditClick = { showEditSongDialog(song) },
-            onDeleteClick = { showDeleteConfirmationDialog(song) },
-            onFavoriteClick = { viewModel.toggleFavorite(song.id, !song.isFavorite) }
-        )
-    }
-
-    /**
-     * Shows options menu for admin songs and coordinates actions with business logic
-     */
-    fun showAdminSongOptionsMenu(song: SongEntity, anchor: View) {
+    fun showSongOptionsMenu(song: SongEntity, anchor: View) {
+        val currentUserId = auth.currentUser?.uid ?: ""
         lifecycleScope.launch {
-            MenuHelper.showAdminSongOptionsMenu(
+            MenuHelper.showSongOptionsMenu(
                 context = context,
                 song = song,
                 anchor = anchor,
+                currentUserId = currentUserId,
                 isAdmin = viewModel.isAdmin.value,
                 onEditClick = { showEditSongDialog(song) },
                 onDeleteClick = { showDeleteConfirmationDialog(song) },
-                onFavoriteClick = { viewModel.toggleFavorite(song.id.toInt(), !song.isFavorite) }
+                onShareClick = { shareSong(song) },
+                onFavoriteClick = { viewModel.toggleFavorite(song.id, !song.isFavorite) }
             )
         }
     }
@@ -70,6 +62,15 @@ class DialogManager(
             onDelete = { viewModel.deleteSong(song) },
             rootView = rootView
         )
+    }
+
+    private fun shareSong(song: SongEntity) {
+        val shareIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, "Check out this song: ${song.title} by ${song.artist}")
+            type = "text/plain"
+        }
+        context.startActivity(Intent.createChooser(shareIntent, "Share Song"))
     }
 
     /**

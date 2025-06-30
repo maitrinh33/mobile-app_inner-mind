@@ -3,52 +3,42 @@ package com.miu.meditationapp.helper
 import android.content.Context
 import android.view.View
 import android.widget.PopupMenu
+import com.miu.meditationapp.R
 import com.miu.meditationapp.databases.SongEntity
 
 object MenuHelper {
-    fun showUserSongOptionsMenu(
+    fun showSongOptionsMenu(
         context: Context,
         song: SongEntity,
         anchor: View,
-        onEditClick: () -> Unit,
-        onDeleteClick: () -> Unit,
-        onFavoriteClick: () -> Unit
-    ) {
-        val popup = PopupMenu(context, anchor)
-        popup.menu.add(0, 0, 0, "Edit")
-        popup.menu.add(0, 1, 1, "Delete")
-        popup.menu.add(0, 2, 2, if (song.isFavorite) "Remove from Favorites" else "Add to Favorites")
-        popup.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                0 -> onEditClick()
-                1 -> onDeleteClick()
-                2 -> onFavoriteClick()
-            }
-            true
-        }
-        popup.show()
-    }
-
-    fun showAdminSongOptionsMenu(
-        context: Context,
-        song: SongEntity,
-        anchor: View,
+        currentUserId: String,
         isAdmin: Boolean,
         onEditClick: () -> Unit,
         onDeleteClick: () -> Unit,
+        onShareClick: () -> Unit,
         onFavoriteClick: () -> Unit
     ) {
         val popup = PopupMenu(context, anchor)
-        if (isAdmin) {
-            popup.menu.add(0, 0, 0, "Edit")
-            popup.menu.add(0, 1, 1, "Delete")
+        
+        // Determine which menu to show
+        val isOwner = song.userId == currentUserId
+        val menuRes = if (isOwner || (song.isAdminSong && isAdmin)) {
+            R.menu.song_menu_owner
+        } else {
+            R.menu.song_menu_viewer
         }
-        popup.menu.add(0, 2, 2, if (song.isFavorite) "Remove from Favorites" else "Add to Favorites")
+        popup.inflate(menuRes)
+
+        // Set favorite text dynamically
+        val favoriteItem = popup.menu.findItem(R.id.menu_add_favourite)
+        favoriteItem?.title = if (song.isFavorite) "Remove from Favorites" else "Add to Favorites"
+        
         popup.setOnMenuItemClickListener { item ->
             when (item.itemId) {
-                0 -> if (isAdmin) onEditClick()
-                1 -> if (isAdmin) onDeleteClick()
-                2 -> onFavoriteClick()
+                R.id.menu_edit -> onEditClick()
+                R.id.menu_delete -> onDeleteClick()
+                R.id.menu_share -> onShareClick()
+                R.id.menu_add_favourite -> onFavoriteClick()
             }
             true
         }

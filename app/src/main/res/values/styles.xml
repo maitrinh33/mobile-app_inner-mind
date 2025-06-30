@@ -57,6 +57,9 @@
         <item name="android:textColor">@android:color/black</item>
         <item name="boxStrokeErrorColor">@android:color/holo_red_dark</item>
         <item name="boxBackgroundColor">@color/white</item>
+        <item name="hintTextAppearance">@style/TextAppearance.MaterialComponents.Body1</item>
+        <item name="helperTextTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
+        <item name="errorTextAppearance">@style/TextAppearance.MaterialComponents.Body2</item>
     </style>
 
     <style name="CompactBottomSheetDialog" parent="Theme.MaterialComponents.Light.BottomSheetDialog">

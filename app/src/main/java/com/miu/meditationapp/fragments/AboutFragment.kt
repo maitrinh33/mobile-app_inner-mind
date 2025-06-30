@@ -67,25 +67,29 @@ class AboutFragment : Fragment() {
         binding.cal.date = calendar.timeInMillis
 
         binding.logout.setOnClickListener {
-            try {
-                auth.signOut()
-                val preferences = context?.getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)
-                preferences?.edit()?.remove("ISCOMPLETE")?.apply()
-
-                // Stop music service on logout
-                context?.stopService(Intent(context, MusicServiceRefactored::class.java))
-
-                val intent = Intent(context, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(intent)
-                activity?.finishAffinity()
-            } catch (e: Exception) {
-                Log.e("AboutFragment", "Error during logout: ", e)
-                Toast.makeText(context, "Error during logout: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            handleLogout()
         }
 
         return binding.root
+    }
+
+    private fun handleLogout() {
+        try {
+            auth.signOut()
+            val preferences = context?.getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)
+            preferences?.edit()?.remove("ISCOMPLETE")?.apply()
+
+            // Stop music service on logout
+            context?.stopService(Intent(context, MusicServiceRefactored::class.java))
+
+            val intent = Intent(context, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            activity?.finishAffinity()
+        } catch (e: Exception) {
+            Log.e("AboutFragment", "Error during logout: ", e)
+            Toast.makeText(context, "Error during logout: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     override fun onDestroyView() {
