@@ -7,6 +7,7 @@ import android.view.View
 import com.miu.meditationapp.databinding.MusicPlayerBarBinding
 import com.miu.meditationapp.services.MusicServiceRefactored
 import com.miu.meditationapp.services.music.MusicBroadcastManager
+import kotlin.math.roundToInt
 
 class MusicPlayerBarManager(
     private val context: Context,
@@ -15,14 +16,16 @@ class MusicPlayerBarManager(
     
     private var currentSongId: String = ""
     private var currentSongTitle: String = ""
-    private var currentSongDuration: String = ""
+    private var currentSongDurationMs: Int = 0
     private var currentSongUri: Uri? = null
     private var isFavorite: Boolean = false
     private var onFavoriteChanged: ((Boolean) -> Unit)? = null
     private var isPlaying: Boolean = false
+    private var isDragging: Boolean = false
     
     init {
         setupClickListeners()
+        setupSlider()
         MusicBroadcastManager.addListener(this)
     }
     
@@ -31,20 +34,41 @@ class MusicPlayerBarManager(
             togglePlayPause()
         }
         
-        // Make the song info area clickable to expand to full player
         binding.textTitle.setOnClickListener {
             expandToFullPlayer()
         }
-        
-        binding.textCurrentTime.setOnClickListener {
-            expandToFullPlayer()
+    }
+
+    private fun setupSlider() {
+        binding.songProgressBar.apply {
+            addOnChangeListener { _, value, fromUser ->
+                if (fromUser) {
+                    isDragging = true
+                    val newPosition = (currentSongDurationMs * (value / 100.0)).roundToInt()
+                    updateTimeDisplay(newPosition, currentSongDurationMs)
+                }
+            }
+
+            addOnSliderTouchListener(object : com.google.android.material.slider.Slider.OnSliderTouchListener {
+                override fun onStartTrackingTouch(slider: com.google.android.material.slider.Slider) {
+                    isDragging = true
+                }
+
+                override fun onStopTrackingTouch(slider: com.google.android.material.slider.Slider) {
+                    isDragging = false
+                    val newPosition = (currentSongDurationMs * (slider.value / 100.0)).roundToInt()
+                    seekToPosition(newPosition)
+                }
+            })
         }
     }
     
     override fun onSongStateChanged(songId: String, songTitle: String, songDuration: String, isPlaying: Boolean) {
         try {
             if (songId.isNotEmpty()) {
-                updateSongInfo(songId, songTitle, songDuration)
+                if (currentSongId != songId) {
+                    updateSongInfo(songId, songTitle, songDuration)
+                }
                 this.isPlaying = isPlaying
                 updatePlayPauseButton(isPlaying)
                 showMusicPlayerBar()
@@ -56,9 +80,13 @@ class MusicPlayerBarManager(
     
     override fun onProgressUpdate(songId: String, currentPosition: Int, duration: Int, isPlaying: Boolean) {
         try {
-            if (songId == currentSongId) {
+            if (songId == currentSongId && !isDragging) {
                 this.isPlaying = isPlaying
-                updateProgress(currentPosition, duration)
+                updatePlayPauseButton(isPlaying)
+                if (currentSongDurationMs == 0 && duration > 0) {
+                    currentSongDurationMs = duration
+                }
+                updateProgress(currentPosition, currentSongDurationMs)
             }
         } catch (e: Exception) {
             android.util.Log.e("MusicPlayerBarManager", "Error in onProgressUpdate", e)
@@ -68,10 +96,12 @@ class MusicPlayerBarManager(
     private fun updateSongInfo(songId: String, title: String, duration: String) {
         currentSongId = songId
         currentSongTitle = title
-        currentSongDuration = duration
+        currentSongDurationMs = duration.toIntOrNull() ?: 0
         try {
             binding.textTitle.text = title
-            binding.textCurrentTime.text = "0:00 / $duration"
+            binding.textEndTime.text = formatTime(currentSongDurationMs)
+            binding.textStartTime.text = "0:00"
+            binding.songProgressBar.value = 0f
         } catch (e: Exception) {
             android.util.Log.e("MusicPlayerBarManager", "Error updating song info", e)
         }
@@ -87,12 +117,20 @@ class MusicPlayerBarManager(
             android.util.Log.e("MusicPlayerBarManager", "Error updating play/pause button", e)
         }
     }
+
+    private fun updateTimeDisplay(currentPosition: Int, duration: Int) {
+        binding.textStartTime.text = formatTime(currentPosition)
+        binding.textEndTime.text = formatTime(duration)
+    }
     
     private fun updateProgress(currentPosition: Int, duration: Int) {
         try {
-            val currentTime = formatTime(currentPosition)
-            val totalTime = formatTime(duration)
-            binding.textCurrentTime.text = "$currentTime / $totalTime"
+            updateTimeDisplay(currentPosition, duration)
+            
+            if (duration > 0) {
+                val progress = (currentPosition.toDouble() / duration.toDouble() * 100).coerceIn(0.0, 100.0)
+                binding.songProgressBar.value = progress.toFloat()
+            }
         } catch (e: Exception) {
             android.util.Log.e("MusicPlayerBarManager", "Error updating progress", e)
         }
@@ -114,13 +152,19 @@ class MusicPlayerBarManager(
         context.startService(intent)
     }
     
+    private fun seekToPosition(position: Int) {
+        val intent = Intent(context, MusicServiceRefactored::class.java).apply {
+            action = MusicServiceRefactored.ACTION_SEEK
+            putExtra("seekPosition", position)
+        }
+        context.startService(intent)
+    }
+    
     private fun isCurrentlyPlaying(): Boolean {
         return isPlaying
     }
 
     private fun expandToFullPlayer() {
-        // This could open a full-screen music player or expand the current bar
-        // For now, we'll just show a toast
         android.widget.Toast.makeText(context, "Full player coming soon!", android.widget.Toast.LENGTH_SHORT).show()
     }
     

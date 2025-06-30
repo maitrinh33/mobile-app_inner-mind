@@ -128,7 +128,8 @@ class MusicFragment : Fragment() {
             requireContext(),
             viewModel,
             viewLifecycleOwner.lifecycleScope,
-            binding.root
+            binding.root,
+            auth
         )
         fragmentInstance = this
     }
@@ -161,8 +162,7 @@ class MusicFragment : Fragment() {
     private fun setupRecyclerViews() {
         recyclerViewManager.setupRecyclerViews(
             onSongClick = playbackManager::handleSongClick,
-            onUserOptionsClick = dialogManager::showUserSongOptionsMenu,
-            onAdminOptionsClick = dialogManager::showAdminSongOptionsMenu,
+            onMoreOptionsClick = dialogManager::showSongOptionsMenu,
             onSwipeToDelete = dialogManager::showDeleteConfirmationDialog,
             onSwipeToEdit = dialogManager::showEditSongDialog
         )
@@ -222,8 +222,17 @@ class MusicFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.currentPlayingSong.collectLatest { song ->
-                song?.takeIf { it.isAdminSong }?.let { 
+                song?.takeIf { it.isAdminSong }?.let {
                     recyclerViewManager.clearLoadingStates()
+                }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.playbackState.collectLatest { state ->
+                recyclerViewManager.setCurrentPlayingAdminSong(state.songId)
+                if (state.isPlaying) {
+                    recyclerViewManager.stopLoading()
                 }
             }
         }
@@ -251,6 +260,11 @@ class MusicFragment : Fragment() {
     }
 
     private suspend fun handleSelectedAudioFile(uri: Uri) {
+        if (auth.currentUser == null) {
+            dialogManager.showError("You must be logged in to add a song.")
+            return
+        }
+        
         if (auth.currentUser == null) {
             dialogManager.showError("Please sign in to add songs")
             return

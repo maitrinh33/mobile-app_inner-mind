@@ -38,12 +38,7 @@ class AdminSongService @Inject constructor(
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     init {
-        // Enable Firebase persistence
-        try {
-            database.setPersistenceEnabled(true)
-        } catch (e: Exception) {
-            Log.w("AdminSongService", "Firebase persistence already enabled")
-        }
+        // REMOVED: database.setPersistenceEnabled(true)
     }
 
     // Check if current user is admin

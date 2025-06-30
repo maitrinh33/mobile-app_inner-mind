@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ModernSongAdapter(
+    private val currentUserId: String,
     private val onSongClick: (SongEntity) -> Unit,
     private val onMoreOptionsClick: (SongEntity, View) -> Unit
 ) : RecyclerView.Adapter<ModernSongAdapter.SongViewHolder>() {
@@ -21,7 +22,7 @@ class ModernSongAdapter(
         fun bind(song: SongEntity) {
             binding.apply {
                 textTitle.text = song.title
-                textDuration.text = song.duration
+                textDuration.text = formatDuration(song.duration)
                 textArtist.text = song.artist
                 textAlbum.text = song.album
 
@@ -64,6 +65,17 @@ class ModernSongAdapter(
             newList.removeAt(position)
             songs = newList
             notifyItemRemoved(position)
+        }
+    }
+
+    private fun formatDuration(duration: String): String {
+        return try {
+            val millis = duration.toLong()
+            val minutes = (millis / 1000) / 60
+            val seconds = (millis / 1000) % 60
+            String.format("%d:%02d", minutes, seconds)
+        } catch (e: NumberFormatException) {
+            "N/A"
         }
     }
 } 

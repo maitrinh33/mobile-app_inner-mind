@@ -39,6 +39,7 @@ class MusicPlayer(private val context: Context) {
     @Synchronized
     fun loadSong(uri: Uri, onPreparedCallback: (() -> Unit)? = null) {
         try {
+            Log.d("MusicPlayer", "Loading song from URI: $uri")
             // If same song is loading, wait
             if (isPreparing && uri == currentUri) {
                 Log.d("MusicPlayer", "Same song is already preparing, waiting...")
@@ -85,6 +86,9 @@ class MusicPlayer(private val context: Context) {
                         } else {
                             setDataSource(uri.toString())
                         }
+                    }
+                    uri.scheme == "file" || uri.scheme == null -> {
+                        uri.path?.let { setDataSource(it) }
                     }
                     else -> setDataSource(context, uri)
                 }

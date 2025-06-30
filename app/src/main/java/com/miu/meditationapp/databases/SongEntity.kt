@@ -19,5 +19,6 @@ data class SongEntity(
     val artist: String = "Unknown Artist",
     val album: String = "Unknown Album",
     val isAdminSong: Boolean = false,
-    val firebaseId: String? = null // To store Firebase document ID for admin songs
+    val firebaseId: String? = null, // To store Firebase document ID for admin songs
+    val localPath: String? = null // To store local path for cached admin songs
 ) 
