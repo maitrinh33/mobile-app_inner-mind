@@ -7,6 +7,10 @@ import androidx.activity.result.ActivityResultLauncher
 import com.google.firebase.auth.FirebaseAuth
 import com.miu.meditationapp.data.repositories.MusicRepository
 import com.miu.meditationapp.databases.SongEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
 
 object FilePickerHelper {
     fun launchSongPicker(
@@ -71,5 +75,15 @@ object FilePickerHelper {
         } catch (e: SecurityException) {
             // Ignore if already granted or not needed
         }
+    }
+
+    suspend fun copyContentUriToCache(context: Context, uri: Uri, fileName: String): File = withContext(Dispatchers.IO) {
+        val file = File(context.cacheDir, fileName)
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(file).use { output ->
+                input.copyTo(output)
+            }
+        }
+        file
     }
 } 

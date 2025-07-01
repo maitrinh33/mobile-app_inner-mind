@@ -9,16 +9,16 @@ InnerMind is a mobile application designed to help users improve their mental we
 
 ## 🛠️ Technologies Used
 
-|Category|Tools & Libraries|
-|---|---|
-|Programming Language|Kotlin|
-|Framework|Android SDK (minSdk 19, targetSdk 34)|
-|Architecture|MVVM (Model-View-ViewModel)|
-|Database|Room (SQLite)|
-|Cloud Services|Firebase (Authentication, Realtime Database, Storage, Analytics)|
-|Media|ExoPlayer / MediaPlayer, Lottie|
-|UI Components|Material Components, ViewBinding, ConstraintLayout, RecyclerView|
-|Other Libraries|Groupie, Picasso, Dropbox SDK, Conscrypt, CircleImageView|
+| Category             | Tools & Libraries                                                |
+|----------------------|------------------------------------------------------------------|
+| Programming Language | Kotlin                                                           |
+| Framework            | Android SDK (minSdk 19, targetSdk 34)                            |
+| Architecture         | MVVM (Model-View-ViewModel)                                      |
+| Database             | Room (SQLite) / Firebase                                         |
+| Cloud Services       | Firebase (Authentication, Realtime Database, Storage, Analytics) |
+| Media                | MediaPlayer, Lottie                                              |
+| UI Components        | Material Components, ViewBinding, ConstraintLayout, RecyclerView |
+| Other Libraries      | Groupie, Picasso, Dropbox SDK, Conscrypt, CircleImageView        |
 
 ---
 

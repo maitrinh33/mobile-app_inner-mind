@@ -20,6 +20,7 @@ class AdminSongAdapter(
 
     private var loadingSongId: Int? = null
     private var currentPlayingSongId: Int? = null
+    private var readySongIds: Set<Int> = emptySet()
 
     inner class SongViewHolder(val binding: ItemAdminSongBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(song: SongEntity) {
@@ -32,12 +33,14 @@ class AdminSongAdapter(
                 // Set loading state: only show if this is the loading song and not the currently playing song
                 loadingOverlay.visibility = if (song.id.toInt() == loadingSongId && song.id.toInt() != currentPlayingSongId) View.VISIBLE else View.GONE
 
+                // Show ready indicator if song is ready for instant playback
+                readyIndicator.visibility = if (readySongIds.contains(song.id)) View.VISIBLE else View.GONE
+
                 // Click listeners
                 root.setOnClickListener {
-                    if (loadingSongId != song.id.toInt()) {
-                        setOnlyLoading(song.id.toInt())
-                        onSongClick(song)
-                    }
+                    android.util.Log.d("AdminSongClick", "Clicked admin song: ${song.id}, loadingSongId=$loadingSongId")
+                    setOnlyLoading(song.id.toInt())
+                    onSongClick(song)
                 }
                 moreOptionsButton.setOnClickListener { onMoreOptionsClick(song, moreOptionsButton) }
 
@@ -83,6 +86,11 @@ class AdminSongAdapter(
 
     fun setCurrentPlayingSongId(songId: Int?) {
         currentPlayingSongId = songId
+        notifyDataSetChanged()
+    }
+
+    fun updateReadySongIds(readyIds: Set<Int>) {
+        readySongIds = readyIds
         notifyDataSetChanged()
     }
 
