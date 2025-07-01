@@ -55,6 +55,8 @@ import com.miu.meditationapp.helper.PlaybackManager
 import com.miu.meditationapp.helper.DialogManager
 import javax.inject.Inject
 import kotlinx.coroutines.flow.combine
+import com.miu.meditationapp.helper.AdminSongCacheHelper
+import com.miu.meditationapp.helper.AdminSongPrefetchManager
 
 @AndroidEntryPoint
 class MusicFragment : Fragment() {
@@ -73,6 +75,8 @@ class MusicFragment : Fragment() {
     private lateinit var recyclerViewManager: RecyclerViewManager
     private lateinit var playbackManager: PlaybackManager
     private lateinit var dialogManager: DialogManager
+    private lateinit var adminSongCacheHelper: AdminSongCacheHelper
+    private lateinit var adminSongPrefetchManager: AdminSongPrefetchManager
 
     private val pickAudioLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -108,6 +112,8 @@ class MusicFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentMusicBinding.inflate(inflater, container, false)
+        adminSongCacheHelper = AdminSongCacheHelper(requireContext())
+        adminSongPrefetchManager = AdminSongPrefetchManager(requireContext(), adminSongCacheHelper)
         initializeManagers()
         checkAuthAndSetup()
         return binding.root
@@ -122,7 +128,8 @@ class MusicFragment : Fragment() {
             viewModel,
             viewLifecycleOwner.lifecycleScope,
             recyclerViewManager,
-            uploadManager
+            uploadManager,
+            adminSongCacheHelper
         )
         dialogManager = DialogManager(
             requireContext(),
@@ -211,6 +218,15 @@ class MusicFragment : Fragment() {
             }.collectLatest { (userSongs, adminSongs) ->
                 recyclerViewManager.updateAdapters(userSongs, adminSongs)
                 stateManager.updateSongListsVisibility(userSongs + adminSongs)
+                val currentIndex = 0
+                adminSongPrefetchManager.prefetchNextSongs(adminSongs, currentIndex, count = 2)
+                adminSongPrefetchManager.refreshReadySongs(adminSongs)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            adminSongPrefetchManager.readySongIds.collectLatest { readyIds ->
+                recyclerViewManager.updateReadyAdminSongIds(readyIds)
             }
         }
 
@@ -225,6 +241,7 @@ class MusicFragment : Fragment() {
                 song?.takeIf { it.isAdminSong }?.let {
                     recyclerViewManager.clearLoadingStates()
                 }
+                recyclerViewManager.clearLoadingStates()
             }
         }
 
@@ -234,6 +251,7 @@ class MusicFragment : Fragment() {
                 if (state.isPlaying) {
                     recyclerViewManager.stopLoading()
                 }
+                recyclerViewManager.clearLoadingStates()
             }
         }
     }

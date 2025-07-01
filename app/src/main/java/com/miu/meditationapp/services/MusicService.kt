@@ -203,6 +203,7 @@ class MusicServiceRefactored : Service() {
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("MusicService", "onStartCommand: action=${intent?.action}, songId=${intent?.getStringExtra("songId")}, uri=${intent?.getStringExtra("uri")}")
         when (intent?.action) {
             ACTION_PLAY -> play()
             ACTION_PAUSE -> pause()
@@ -212,11 +213,10 @@ class MusicServiceRefactored : Service() {
                 val title = intent.getStringExtra("title") ?: return START_NOT_STICKY
                 val uriString = intent.getStringExtra("uri") ?: return START_NOT_STICKY
                 val duration = intent.getStringExtra("duration") ?: return START_NOT_STICKY
-                
                 playSong(songId, title, Uri.parse(uriString), duration)
             }
             ACTION_SEEK -> {
-                val position = intent.getIntExtra("position", 0)
+                val position = intent.getIntExtra("seekPosition", 0)
                 seekTo(position)
             }
             ACTION_GET_STATE -> {
@@ -227,7 +227,6 @@ class MusicServiceRefactored : Service() {
                 sendCurrentState()
             }
         }
-        
         return START_STICKY
     }
     

@@ -51,6 +51,7 @@ class MusicServiceRepository @Inject constructor(
     }
 
     fun playSong(song: SongEntity) {
+        android.util.Log.d("MusicServiceRepository", "Sending play intent for song: ${song.id} - ${song.title}")
         CoroutineScope(Dispatchers.IO).launch {
             musicRepository.playSong(song) { songToPlay ->
                 val intent = Intent(context, MusicServiceRefactored::class.java).apply {

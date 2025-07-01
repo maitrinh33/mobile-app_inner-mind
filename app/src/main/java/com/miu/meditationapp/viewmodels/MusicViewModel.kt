@@ -124,6 +124,7 @@ class MusicViewModel @Inject constructor(
         repository.uploadAdminSongFromUri(uri, onSuccess, onError)
     }
     fun playSong(song: SongEntity) {
+        android.util.Log.d("MusicViewModel", "Request to play song: ${song.id} - ${song.title}")
         viewModelScope.launch {
             stopSong()
             musicServiceRepository.playSong(song)

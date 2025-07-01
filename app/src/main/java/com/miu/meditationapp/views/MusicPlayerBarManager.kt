@@ -57,6 +57,7 @@ class MusicPlayerBarManager(
                 override fun onStopTrackingTouch(slider: com.google.android.material.slider.Slider) {
                     isDragging = false
                     val newPosition = (currentSongDurationMs * (slider.value / 100.0)).roundToInt()
+                    android.util.Log.d("MusicPlayerBarManager", "SeekBar stop: duration=$currentSongDurationMs, value=${slider.value}, newPosition=$newPosition")
                     seekToPosition(newPosition)
                 }
             })
@@ -65,14 +66,11 @@ class MusicPlayerBarManager(
     
     override fun onSongStateChanged(songId: String, songTitle: String, songDuration: String, isPlaying: Boolean) {
         try {
-            if (songId.isNotEmpty()) {
-                if (currentSongId != songId) {
-                    updateSongInfo(songId, songTitle, songDuration)
-                }
-                this.isPlaying = isPlaying
-                updatePlayPauseButton(isPlaying)
-                showMusicPlayerBar()
-            }
+            // Always update song info, even if songId is the same
+            updateSongInfo(songId, songTitle, songDuration)
+            this.isPlaying = isPlaying
+            updatePlayPauseButton(isPlaying)
+            showMusicPlayerBar()
         } catch (e: Exception) {
             android.util.Log.e("MusicPlayerBarManager", "Error in onSongStateChanged", e)
         }
@@ -83,7 +81,7 @@ class MusicPlayerBarManager(
             if (songId == currentSongId && !isDragging) {
                 this.isPlaying = isPlaying
                 updatePlayPauseButton(isPlaying)
-                if (currentSongDurationMs == 0 && duration > 0) {
+                if (duration > 0) {
                     currentSongDurationMs = duration
                 }
                 updateProgress(currentPosition, currentSongDurationMs)
@@ -96,12 +94,13 @@ class MusicPlayerBarManager(
     private fun updateSongInfo(songId: String, title: String, duration: String) {
         currentSongId = songId
         currentSongTitle = title
-        currentSongDurationMs = duration.toIntOrNull() ?: 0
+        val parsedDuration = duration.toIntOrNull() ?: 0
+        if (parsedDuration > 0) {
+            currentSongDurationMs = parsedDuration
+        }
         try {
             binding.textTitle.text = title
             binding.textEndTime.text = formatTime(currentSongDurationMs)
-            binding.textStartTime.text = "0:00"
-            binding.songProgressBar.value = 0f
         } catch (e: Exception) {
             android.util.Log.e("MusicPlayerBarManager", "Error updating song info", e)
         }

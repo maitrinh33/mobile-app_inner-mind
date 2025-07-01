@@ -88,4 +88,8 @@ class RecyclerViewManager(
     fun setCurrentPlayingAdminSong(songId: Int?) {
         adminSongAdapter.setCurrentPlayingSongId(songId)
     }
+
+    fun updateReadyAdminSongIds(readyIds: Set<Int>) {
+        adminSongAdapter.updateReadySongIds(readyIds)
+    }
 } 

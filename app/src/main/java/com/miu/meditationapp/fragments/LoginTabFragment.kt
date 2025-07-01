@@ -104,6 +104,7 @@ class LoginTabFragment : Fragment() {
                 if (task.isSuccessful) {
                     checkUserRoleAndProceed()
                 } else {
+                    if (!isAdded || _binding == null) return@addOnCompleteListener
                     binding.progressbar.visibility = View.GONE
                     val errorMessage = when (task.exception?.message) {
                         "There is no user record corresponding to this identifier. The user may have been deleted." ->
@@ -133,21 +134,19 @@ class LoginTabFragment : Fragment() {
         userRef.keepSynced(true)
         
         userRef.get().addOnSuccessListener { snapshot ->
-            if (isAdded) {
-                binding.progressbar.visibility = View.GONE
-                if (snapshot.exists() && snapshot.child("isAdmin").value == true) {
-                    Toast.makeText(requireContext(), "Welcome Admin!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(requireContext(), "Login Successful..", Toast.LENGTH_SHORT).show()
-                }
-                startMainActivity()
+            if (!isAdded || _binding == null) return@addOnSuccessListener
+            binding.progressbar.visibility = View.GONE
+            if (snapshot.exists() && snapshot.child("isAdmin").value == true) {
+                Toast.makeText(requireContext(), "Welcome Admin!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(requireContext(), "Login Successful..", Toast.LENGTH_SHORT).show()
             }
+            startMainActivity()
         }.addOnFailureListener {
-            if (isAdded) {
-                binding.progressbar.visibility = View.GONE
-                Toast.makeText(requireContext(), "Login successful, but failed to fetch user data.", Toast.LENGTH_SHORT).show()
-                startMainActivity()
-            }
+            if (!isAdded || _binding == null) return@addOnFailureListener
+            binding.progressbar.visibility = View.GONE
+            Toast.makeText(requireContext(), "Login successful, but failed to fetch user data.", Toast.LENGTH_SHORT).show()
+            startMainActivity()
         }
     }
 
@@ -156,6 +155,7 @@ class LoginTabFragment : Fragment() {
         binding.progressbar.visibility = View.VISIBLE
         mAuth.signInWithCredential(credential)
             .addOnCompleteListener(requireActivity()) { task ->
+                if (!isAdded || _binding == null) return@addOnCompleteListener
                 if (task.isSuccessful) {
                     val user = mAuth.currentUser
                     val isNewUser = task.result?.additionalUserInfo?.isNewUser ?: false
@@ -184,12 +184,14 @@ class LoginTabFragment : Fragment() {
 
         ref.setValue(userToSave)
             .addOnSuccessListener {
+                if (!isAdded || _binding == null) return@addOnSuccessListener
                 binding.progressbar.visibility = View.GONE
                 Log.d("LoginTabFragment", "Successfully saved new Google user to Firebase DB")
                 Toast.makeText(requireContext(), "Welcome!", Toast.LENGTH_SHORT).show()
                 startMainActivity()
             }
             .addOnFailureListener {
+                if (!isAdded || _binding == null) return@addOnFailureListener
                 binding.progressbar.visibility = View.GONE
                 Log.e("LoginTabFragment", "Failed to save new Google user to DB", it)
                 startMainActivity()

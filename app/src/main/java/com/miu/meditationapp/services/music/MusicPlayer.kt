@@ -39,19 +39,16 @@ class MusicPlayer(private val context: Context) {
     @Synchronized
     fun loadSong(uri: Uri, onPreparedCallback: (() -> Unit)? = null) {
         try {
-            Log.d("MusicPlayer", "Loading song from URI: $uri")
+            Log.d("MusicPlayer", "loadSong called for URI: $uri")
             // If same song is loading, wait
             if (isPreparing && uri == currentUri) {
                 Log.d("MusicPlayer", "Same song is already preparing, waiting...")
                 return
             }
-            
             currentUri = uri
             isPreparing = true
-            
             // Release any existing MediaPlayer
             release()
-            
             // Create new MediaPlayer
             mediaPlayer = MediaPlayer().apply {
                 // Set audio attributes
@@ -71,6 +68,16 @@ class MusicPlayer(private val context: Context) {
                         put("User-Agent", "MeditationApp/1.0")
                     }
                 } else null
+                
+                // Check file existence/readability for file URIs
+                if (uri.scheme == "file" || uri.scheme == null) {
+                    val file = File(uri.path ?: "")
+                    if (!file.exists() || !file.canRead()) {
+                        Log.e("MusicPlayer", "File does not exist or is not readable: ${file.absolutePath}")
+                    } else {
+                        Log.d("MusicPlayer", "File exists and is readable: ${file.absolutePath}")
+                    }
+                }
                 
                 // Set data source based on URI type
                 when {
@@ -94,6 +101,7 @@ class MusicPlayer(private val context: Context) {
                 }
                 
                 setOnPreparedListener {
+                    Log.d("MusicPlayer", "MediaPlayer prepared for URI: $uri")
                     isPreparing = false
                     // Set initial volume to ensure audio is audible
                     setVolume(1.0f, 1.0f)
@@ -102,6 +110,7 @@ class MusicPlayer(private val context: Context) {
                 }
                 
                 setOnCompletionListener {
+                    Log.d("MusicPlayer", "MediaPlayer completed for URI: $uri")
                     this@MusicPlayer.isPlaying = false
                     onCompletion?.invoke()
                 }
@@ -121,7 +130,8 @@ class MusicPlayer(private val context: Context) {
             }
         } catch (e: Exception) {
             isPreparing = false
-            Log.e("MusicPlayer", "Error loading song: $uri", e)
+            Log.e("MusicPlayer", "Exception in loadSong for URI: $uri", e)
+            release()
             throw e
         }
     }
@@ -168,8 +178,8 @@ class MusicPlayer(private val context: Context) {
                 Log.d("MusicPlayer", "Cannot play while preparing")
                 return
             }
-            
             if (!(mediaPlayer?.isPlaying ?: false)) {
+                Log.d("MusicPlayer", "Starting playback at position: ${mediaPlayer?.currentPosition}")
                 mediaPlayer?.start()
                 isPlaying = true
             }
@@ -206,6 +216,7 @@ class MusicPlayer(private val context: Context) {
     
     fun seekTo(position: Int) {
         try {
+            Log.d("MusicPlayer", "Seeking to position: $position (ms)")
             mediaPlayer?.seekTo(position)
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error seeking", e)
@@ -258,6 +269,7 @@ class MusicPlayer(private val context: Context) {
     @Synchronized
     fun release() {
         try {
+            Log.d("MusicPlayer", "Releasing MediaPlayer")
             mediaPlayer?.let { player ->
                 if (player.isPlaying) {
                     player.stop()
@@ -268,6 +280,7 @@ class MusicPlayer(private val context: Context) {
             isPlaying = false
             isPreparing = false
             currentUri = null
+            Log.d("MusicPlayer", "MediaPlayer released and set to null")
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error releasing MediaPlayer", e)
         }
