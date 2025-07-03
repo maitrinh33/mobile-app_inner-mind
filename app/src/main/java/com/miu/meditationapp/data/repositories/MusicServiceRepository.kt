@@ -14,6 +14,7 @@ import javax.inject.Singleton
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import androidx.core.content.ContextCompat
 
 @Singleton
 class MusicServiceRepository @Inject constructor(
@@ -61,7 +62,7 @@ class MusicServiceRepository @Inject constructor(
                     putExtra("uri", songToPlay.localPath ?: songToPlay.uri)
                     putExtra("duration", songToPlay.duration)
                 }
-                context.startService(intent)
+                ContextCompat.startForegroundService(context, intent)
             }
         }
     }
@@ -70,20 +71,20 @@ class MusicServiceRepository @Inject constructor(
         val intent = Intent(context, MusicServiceRefactored::class.java).apply {
             action = MusicServiceRefactored.ACTION_PAUSE
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
 
     fun resumeSong() {
         val intent = Intent(context, MusicServiceRefactored::class.java).apply {
             action = MusicServiceRefactored.ACTION_RESUME
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
 
     fun stopSong() {
         val intent = Intent(context, MusicServiceRefactored::class.java).apply {
             action = MusicServiceRefactored.ACTION_STOP
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
 } 

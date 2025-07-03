@@ -309,7 +309,7 @@ class MusicFragment : Fragment() {
 
     override fun onStop() {
         super.onStop()
-        requireContext().unbindService(serviceConnection)
+        // Removed unbindService from here to keep service alive in background
     }
 
     override fun onDestroyView() {

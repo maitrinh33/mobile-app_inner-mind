@@ -16,6 +16,7 @@ import com.miu.meditationapp.databinding.BottomSheetMusicPlayerBinding
 import com.miu.meditationapp.services.MusicServiceRefactored
 import com.miu.meditationapp.services.music.MusicBroadcastManager
 import android.util.Log
+import androidx.core.content.ContextCompat
 
 class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManager.MusicBroadcastListener {
     private var _binding: BottomSheetMusicPlayerBinding? = null
@@ -53,6 +54,11 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
         updateUI()
         setupClickListeners()
         MusicBroadcastManager.addListener(this)
+        // Request current state from the service so UI updates immediately
+        val intent = Intent(requireContext(), MusicServiceRefactored::class.java).apply {
+            action = MusicServiceRefactored.ACTION_GET_STATE
+        }
+        ContextCompat.startForegroundService(requireContext(), intent)
     }
     
     override fun onSongStateChanged(songId: String, songTitle: String, songDuration: String, isPlaying: Boolean) {
@@ -125,7 +131,7 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
                 action = if (isCurrentlyPlaying()) MusicServiceRefactored.ACTION_PAUSE else MusicServiceRefactored.ACTION_PLAY
             }
             Log.d("MusicPlayerBottomSheet", "Sending intent with action: ${intent.action}")
-            requireContext().startService(intent)
+            ContextCompat.startForegroundService(requireContext(), intent)
         } else {
             Log.w("MusicPlayerBottomSheet", "togglePlayPause: songId is empty, cannot send intent")
         }
@@ -169,7 +175,7 @@ class MusicPlayerBottomSheet : BottomSheetDialogFragment(), MusicBroadcastManage
                 putExtra("uri", songUri.toString())
                 putExtra("duration", songDuration)
             }
-            requireContext().startService(intent)
+            ContextCompat.startForegroundService(requireContext(), intent)
         }
     }
     
