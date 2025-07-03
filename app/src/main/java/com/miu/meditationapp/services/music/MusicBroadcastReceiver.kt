@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.miu.meditationapp.services.MusicServiceRefactored
+import androidx.core.content.ContextCompat
 
 /**
  * Dedicated broadcast receiver for music control actions
@@ -17,7 +18,7 @@ class MusicBroadcastReceiver : BroadcastReceiver() {
             val serviceIntent = Intent(context, MusicServiceRefactored::class.java).apply {
                 action = intent.action
             }
-            context.startService(serviceIntent)
+            ContextCompat.startForegroundService(context, serviceIntent)
         } catch (e: Exception) {
             Log.e("MusicBroadcastReceiver", "Error handling broadcast", e)
         }

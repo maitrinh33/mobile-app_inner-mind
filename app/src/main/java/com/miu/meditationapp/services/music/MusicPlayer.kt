@@ -8,6 +8,10 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import java.io.File
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Handles the core MediaPlayer functionality and audio playback
@@ -27,6 +31,7 @@ class MusicPlayer(private val context: Context) {
     var onCompletion: (() -> Unit)? = null
     var onError: ((Int, Int) -> Boolean)? = null
     var onProgressUpdate: ((Int, Int) -> Unit)? = null
+    var onPlaybackStarted: (() -> Unit)? = null
     
     init {
         setupAudioManager()
@@ -36,103 +41,98 @@ class MusicPlayer(private val context: Context) {
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
     
-    @Synchronized
     fun loadSong(uri: Uri, onPreparedCallback: (() -> Unit)? = null) {
-        try {
-            Log.d("MusicPlayer", "loadSong called for URI: $uri")
-            // If same song is loading, wait
-            if (isPreparing && uri == currentUri) {
-                Log.d("MusicPlayer", "Same song is already preparing, waiting...")
-                return
-            }
-            currentUri = uri
-            isPreparing = true
-            // Release any existing MediaPlayer
-            release()
-            // Create new MediaPlayer
-            mediaPlayer = MediaPlayer().apply {
-                // Set audio attributes
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                Log.d("MusicPlayer", "loadSong called for URI: $uri")
+                if (isPreparing && uri == currentUri) {
+                    Log.d("MusicPlayer", "Same song is already preparing, waiting...")
+                    return@launch
+                }
+                currentUri = uri
+                isPreparing = true
+                withContext(Dispatchers.Main) { release() }
+                val fileCheckPassed = if (uri.scheme == "file" || uri.scheme == null) {
+                    val file = File(uri.path ?: "")
+                    if (!file.exists() || !file.canRead()) {
+                        Log.e("MusicPlayer", "File does not exist or is not readable: "+file.absolutePath)
+                        false
+                    } else {
+                        Log.d("MusicPlayer", "File exists and is readable: "+file.absolutePath)
+                        true
+                    }
+                } else true
+                if (!fileCheckPassed) return@launch
+
+                val player = MediaPlayer()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    setAudioAttributes(AudioAttributes.Builder().apply {
+                    player.setAudioAttributes(AudioAttributes.Builder().apply {
                         setUsage(AudioAttributes.USAGE_MEDIA)
                         setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     }.build())
                 } else {
                     @Suppress("DEPRECATION")
-                    setAudioStreamType(AudioManager.STREAM_MUSIC)
+                    player.setAudioStreamType(AudioManager.STREAM_MUSIC)
                 }
-                
-                // For HTTP/HTTPS URLs, set proper headers and buffering
                 val headers = if (uri.scheme?.startsWith("http") == true) {
                     HashMap<String, String>().apply {
                         put("User-Agent", "MeditationApp/1.0")
                     }
                 } else null
-                
-                // Check file existence/readability for file URIs
-                if (uri.scheme == "file" || uri.scheme == null) {
-                    val file = File(uri.path ?: "")
-                    if (!file.exists() || !file.canRead()) {
-                        Log.e("MusicPlayer", "File does not exist or is not readable: ${file.absolutePath}")
-                    } else {
-                        Log.d("MusicPlayer", "File exists and is readable: ${file.absolutePath}")
-                    }
-                }
-                
-                // Set data source based on URI type
+                var setDataSourceOnMain = false
                 when {
                     uri.scheme?.startsWith("http") == true -> {
-                        // Set larger buffer size for streaming
-                        setOnBufferingUpdateListener { _, percent ->
-                            Log.d("MusicPlayer", "Buffering: $percent%")
-                        }
-                        
-                        // Set network timeout and data source
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            setDataSource(context, uri, headers ?: emptyMap())
+                            player.setDataSource(context, uri, headers ?: emptyMap())
                         } else {
-                            setDataSource(uri.toString())
+                            player.setDataSource(uri.toString())
                         }
                     }
                     uri.scheme == "file" || uri.scheme == null -> {
-                        uri.path?.let { setDataSource(it) }
+                        uri.path?.let { player.setDataSource(it) }
                     }
-                    else -> setDataSource(context, uri)
-                }
-                
-                setOnPreparedListener {
-                    Log.d("MusicPlayer", "MediaPlayer prepared for URI: $uri")
-                    isPreparing = false
-                    // Set initial volume to ensure audio is audible
-                    setVolume(1.0f, 1.0f)
-                    onPreparedCallback?.invoke()
-                    onPrepared?.invoke()
-                }
-                
-                setOnCompletionListener {
-                    Log.d("MusicPlayer", "MediaPlayer completed for URI: $uri")
-                    this@MusicPlayer.isPlaying = false
-                    onCompletion?.invoke()
-                }
-                
-                setOnErrorListener { mp, what, extra ->
-                    Log.e("MusicPlayer", "MediaPlayer error: what=$what, extra=$extra, uri=$uri")
-                    isPreparing = false
-                    this@MusicPlayer.isPlaying = false
-                    if (what == MediaPlayer.MEDIA_ERROR_UNSUPPORTED) {
-                        Log.e("MusicPlayer", "Unsupported format or URL error")
+                    else -> {
+                        setDataSourceOnMain = true
                     }
-                    onError?.invoke(what, extra) ?: true
                 }
-                
-                // Prepare asynchronously
-                prepareAsync()
+                if (setDataSourceOnMain) {
+                    withContext(Dispatchers.Main) {
+                        player.setDataSource(context, uri)
+                    }
+                }
+                withContext(Dispatchers.Main) {
+                    mediaPlayer = player
+                    player.setOnPreparedListener {
+                        Log.d("MusicPlayer", "MediaPlayer prepared for URI: $uri")
+                        isPreparing = false
+                        setVolume(1.0f, 1.0f)
+                        onPreparedCallback?.invoke()
+                        onPrepared?.invoke()
+                        play()
+                        onPlaybackStarted?.invoke()
+                    }
+                    player.setOnCompletionListener {
+                        Log.d("MusicPlayer", "MediaPlayer completed for URI: $uri")
+                        this@MusicPlayer.isPlaying = false
+                        onCompletion?.invoke()
+                    }
+                    player.setOnErrorListener { mp, what, extra ->
+                        Log.e("MusicPlayer", "MediaPlayer error: what=$what, extra=$extra, uri=$uri")
+                        isPreparing = false
+                        this@MusicPlayer.isPlaying = false
+                        if (what == MediaPlayer.MEDIA_ERROR_UNSUPPORTED) {
+                            Log.e("MusicPlayer", "Unsupported format or URL error")
+                        }
+                        onError?.invoke(what, extra) ?: true
+                    }
+                    player.prepareAsync()
+                }
+            } catch (e: Exception) {
+                isPreparing = false
+                Log.e("MusicPlayer", "Exception in loadSong for URI: $uri", e)
+                withContext(Dispatchers.Main) { release() }
+                throw e
             }
-        } catch (e: Exception) {
-            isPreparing = false
-            Log.e("MusicPlayer", "Exception in loadSong for URI: $uri", e)
-            release()
-            throw e
         }
     }
     
@@ -157,17 +157,6 @@ class MusicPlayer(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.w("MusicPlayer", "Could not check file accessibility: ${e.message}")
-        }
-    }
-    
-    fun setDataSource(uri: Uri) {
-        try {
-            mediaPlayer?.reset()
-            mediaPlayer?.setDataSource(context, uri)
-            mediaPlayer?.prepare()
-        } catch (e: Exception) {
-            Log.e("MusicPlayer", "Error setting data source", e)
-            throw e
         }
     }
     
@@ -284,5 +273,30 @@ class MusicPlayer(private val context: Context) {
         } catch (e: Exception) {
             Log.e("MusicPlayer", "Error releasing MediaPlayer", e)
         }
+    }
+    
+    fun playSong(
+        songId: String,
+        title: String,
+        uri: Uri,
+        duration: String,
+        onPreparedCallback: (() -> Unit)? = null
+    ) {
+        loadSong(uri) {
+            play()
+            onPreparedCallback?.invoke()
+        }
+    }
+
+    fun pausePlayback() {
+        pause()
+    }
+
+    fun seekToPosition(position: Int) {
+        seekTo(position)
+    }
+
+    fun stopPlayback() {
+        stop()
     }
 } 

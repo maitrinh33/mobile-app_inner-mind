@@ -42,7 +42,7 @@ class MusicRepository @Inject constructor(
 
     private val userId: String get() = auth.currentUser?.uid ?: ""
 
-    fun getSongs(): Flow<List<SongEntity>> = songDao.getAllSongs()
+    fun getSongs(): Flow<List<SongEntity>> = songDao.getSongsByUser(userId)
 
     suspend fun addSong(song: SongEntity) {
         if (song.isAdminSong && !adminSongService.isCurrentUserAdmin()) {

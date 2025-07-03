@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -21,6 +24,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.miu.meditationapp.R
 import com.miu.meditationapp.databinding.ActivityMeditationBinding
 import com.miu.meditationapp.viewmodels.HomeViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -39,6 +45,9 @@ class MeditationActivity : AppCompatActivity() {
     lateinit var currentUser: FirebaseUser
     private var isRunning: Boolean = false
     private var isManuallyFinishing: Boolean = false
+    private var audioManager: AudioManager? = null
+    private var focusRequest: AudioFocusRequest? = null
+    private var hasAudioFocus = false
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,6 +56,19 @@ class MeditationActivity : AppCompatActivity() {
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         isFullscreen = true
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        focusRequest = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                .setOnAudioFocusChangeListener { }
+                .build()
+        } else null
 
         // Firebase user & ViewModel
         currentUser = FirebaseAuth.getInstance().currentUser!!
@@ -82,7 +104,26 @@ class MeditationActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>) {}
         }
 
-        mediaPlayer = MediaPlayer.create(applicationContext, R.raw.back_sound)
+        // MediaPlayer initialization (async, non-blocking)
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val afd = resources.openRawResourceFd(R.raw.back_sound)
+                val player = MediaPlayer()
+                player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                player.setOnPreparedListener {
+                    // Assign to field on main thread
+                    CoroutineScope(Dispatchers.Main).launch {
+                        mediaPlayer = player
+                        // If you want to do something when ready, do it here
+                    }
+                }
+                player.prepareAsync()
+            } catch (e: Exception) {
+                // Handle error (optional)
+            }
+        }
+
         timer = createTimer()
 
         // Back callback (thay cho onBackPressed)
@@ -106,7 +147,7 @@ class MeditationActivity : AppCompatActivity() {
             binding.spinner.isEnabled = false
             binding.spinner.isClickable = false
             mediaPlayer.isLooping = true
-            mediaPlayer.start()
+            requestAudioFocusAndPlay()
             binding.start.isClickable = false
             binding.start.text = "Started"
             isRunning = true
@@ -117,9 +158,10 @@ class MeditationActivity : AppCompatActivity() {
                 if (mediaPlayer.isPlaying) {
                     binding.sound.setImageResource(R.drawable.sound_no)
                     mediaPlayer.pause()
+                    abandonAudioFocus()
                 } else {
                     binding.sound.setImageResource(R.drawable.sound)
-                    mediaPlayer.start()
+                    requestAudioFocusAndPlay()
                 }
             }
         }
@@ -144,6 +186,7 @@ class MeditationActivity : AppCompatActivity() {
                     mediaPlayer.stop()
                 }
                 mediaPlayer.release()
+                abandonAudioFocus()
             } catch (_: Exception) {}
         }
 
@@ -217,5 +260,27 @@ class MeditationActivity : AppCompatActivity() {
         }
         builder.setNegativeButton("Cancel") { dialog, _ -> dialog.cancel() }
         builder.create().show()
+    }
+
+    private fun requestAudioFocusAndPlay() {
+        val granted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            audioManager?.requestAudioFocus(focusRequest!!)
+        } else {
+            audioManager?.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+        }
+        hasAudioFocus = (granted == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+        if (hasAudioFocus) {
+            mediaPlayer.start()
+        }
+    }
+
+    private fun abandonAudioFocus() {
+        if (!hasAudioFocus) return
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            focusRequest?.let { audioManager?.abandonAudioFocusRequest(it) }
+        } else {
+            audioManager?.abandonAudioFocus(null)
+        }
+        hasAudioFocus = false
     }
 } 

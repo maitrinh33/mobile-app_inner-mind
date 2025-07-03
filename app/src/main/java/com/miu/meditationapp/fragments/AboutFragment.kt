@@ -29,6 +29,7 @@ class AboutFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("AboutFragment", "onCreateView called")
         _binding = FragmentAboutBinding.inflate(inflater, container, false)
         auth = FirebaseAuth.getInstance()
         viewModel = ViewModelProvider(this).get(AboutViewModel::class.java)
@@ -67,6 +68,7 @@ class AboutFragment : Fragment() {
         binding.cal.date = calendar.timeInMillis
 
         binding.logout.setOnClickListener {
+            Log.d("AboutFragment", "Logout button clicked")
             handleLogout()
         }
 
@@ -74,6 +76,7 @@ class AboutFragment : Fragment() {
     }
 
     private fun handleLogout() {
+        Log.d("AboutFragment", "handleLogout called")
         try {
             auth.signOut()
             val preferences = context?.getSharedPreferences("ONBOARD", Context.MODE_PRIVATE)

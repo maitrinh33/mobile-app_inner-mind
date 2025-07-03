@@ -8,6 +8,7 @@ import com.miu.meditationapp.databinding.MusicPlayerBarBinding
 import com.miu.meditationapp.services.MusicServiceRefactored
 import com.miu.meditationapp.services.music.MusicBroadcastManager
 import kotlin.math.roundToInt
+import androidx.core.content.ContextCompat
 
 class MusicPlayerBarManager(
     private val context: Context,
@@ -148,7 +149,7 @@ class MusicPlayerBarManager(
                 action = if (isCurrentlyPlaying()) MusicServiceRefactored.ACTION_PAUSE else MusicServiceRefactored.ACTION_PLAY
             }
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
     
     private fun seekToPosition(position: Int) {
@@ -156,7 +157,7 @@ class MusicPlayerBarManager(
             action = MusicServiceRefactored.ACTION_SEEK
             putExtra("seekPosition", position)
         }
-        context.startService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
     
     private fun isCurrentlyPlaying(): Boolean {

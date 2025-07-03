@@ -91,4 +91,28 @@ class MusicStateManager(context: Context) {
         cachedState = null
         prefs.edit().clear().apply()
     }
+
+    // New: Save current state (wrapper for suspend saveState)
+    suspend fun saveCurrentState(
+        songId: String,
+        title: String,
+        uri: Uri?,
+        duration: String,
+        position: Int,
+        isPlaying: Boolean
+    ) {
+        if (uri != null) {
+            saveState(songId, title, uri, duration, position, isPlaying)
+        }
+    }
+
+    // New: Restore state and return MusicState if available
+    fun restoreState(): MusicState? {
+        return getState()
+    }
+
+    // New: Restore previous state and return MusicState if available
+    fun restorePreviousState(): MusicState? {
+        return getState()
+    }
 } 
